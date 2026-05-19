@@ -140,22 +140,42 @@ function Dashboard() {
   const [vndStr, setVndStr] = useState(String(Math.round(100 * RATE)));
   const [flipped, setFlipped] = useState(false);
 
+  // Sanitizers — keep raw text in state so the user can edit freely.
+  // sanitizeDec: digits + at most one decimal point (for AUD).
+  const sanitizeDec = (s) => {
+    let c = String(s).replace(/[^\d.]/g, "");
+    const parts = c.split(".");
+    if (parts.length > 2) c = parts[0] + "." + parts.slice(1).join("");
+    return c;
+  };
+  // sanitizeInt: digits only, strip leading zeros so "0" + "5" becomes "5" (for VND).
+  const sanitizeInt = (s) => {
+    const d = String(s).replace(/\D/g, "");
+    if (d === "") return "";
+    const noLead = d.replace(/^0+/, "");
+    return noLead === "" ? "0" : noLead;
+  };
+
   const onAudChange = (e) => {
-    setAud(e.target.value);
-    const v = parseFloat(e.target.value) || 0;
-    setVndStr(String(Math.round(v * RATE)));
+    const s = sanitizeDec(e.target.value);
+    setAud(s);
+    if (s === "" || s === ".") { setVndStr(""); return; }
+    const v = parseFloat(s);
+    setVndStr(isNaN(v) ? "" : String(Math.round(v * RATE)));
   };
   const onVndChange = (e) => {
-    setVndStr(e.target.value);
-    const v = parseFloat(e.target.value) || 0;
-    setAud((v / RATE).toFixed(2));
+    const s = sanitizeInt(e.target.value);
+    setVndStr(s);
+    if (s === "") { setAud(""); return; }
+    const v = parseFloat(s);
+    setAud(isNaN(v) ? "" : (v / RATE).toFixed(2));
   };
 
   const audSide = (
     <label className="fx-side">
       <span className="fx-label">Australian Dollars</span>
       <span className="fx-input">
-        <input type="number" inputMode="decimal" value={aud} onChange={onAudChange} aria-label="AUD amount" />
+        <input type="text" inputMode="decimal" pattern="[0-9.]*" value={aud} onChange={onAudChange} aria-label="AUD amount" />
         <span className="fx-currency">A$</span>
       </span>
     </label>
@@ -164,7 +184,7 @@ function Dashboard() {
     <label className="fx-side" style={{ alignItems: "flex-end", textAlign: "right" }}>
       <span className="fx-label">Vietnamese Dong</span>
       <span className="fx-input" style={{ justifyContent: "flex-end" }}>
-        <input type="number" inputMode="numeric" value={vndStr} onChange={onVndChange} aria-label="VND amount" style={{ textAlign: "right" }} />
+        <input type="text" inputMode="numeric" pattern="[0-9]*" value={vndStr} onChange={onVndChange} aria-label="VND amount" style={{ textAlign: "right" }} />
         <span className="fx-currency">₫</span>
       </span>
     </label>
