@@ -133,12 +133,87 @@ function Hero({ onScrollDown }) {
 function Dashboard() {
   const cities = Object.keys(D.weather);
   const [city, setCity] = useState(cities[0]);
-  const w = D.weather[city];
+  const [liveWeather, setLiveWeather] = useState(D.weather);
+  const w = liveWeather[city] || D.weather[city];
 
-  const RATE = 16450; // 1 AUD ≈ 16,450 VND (snapshot)
+  const [rate, setRate] = useState(16450); // AUD→VND, refreshed live on load
   const [aud, setAud] = useState("100");
-  const [vndStr, setVndStr] = useState(String(Math.round(100 * RATE)));
+  const [vndStr, setVndStr] = useState(String(Math.round(100 * 16450)));
   const [flipped, setFlipped] = useState(false);
+
+  // City coordinates for the live weather fetch (one per D.weather key)
+  const cityCoords = {
+    "Ho Chi Minh City": [10.7769, 106.7009],
+    "Hanoi": [21.0278, 105.8342],
+    "Ha Long Bay": [20.9101, 107.1839],
+    "Ninh Binh": [20.2506, 105.9745],
+  };
+
+  // Live weather (Open-Meteo, free, no key) — falls back to the static data on failure
+  useEffect(() => {
+    let cancelled = false;
+    const wmo = (code) => {
+      if (code === 0) return { icon: "sun", cond: "Clear" };
+      if (code === 1) return { icon: "sun", cond: "Mainly clear" };
+      if (code === 2) return { icon: "cloud-sun", cond: "Partly cloudy" };
+      if (code === 3) return { icon: "cloud", cond: "Overcast" };
+      if (code >= 45 && code <= 48) return { icon: "cloud", cond: "Fog" };
+      if (code >= 51 && code <= 57) return { icon: "cloud", cond: "Drizzle" };
+      if (code >= 61 && code <= 67) return { icon: "storm", cond: "Rain" };
+      if (code >= 80 && code <= 82) return { icon: "storm", cond: "Showers" };
+      if (code >= 95) return { icon: "storm", cond: "Thunderstorm" };
+      return { icon: "cloud", cond: "Cloudy" };
+    };
+    cities.forEach(async (c) => {
+      const co = cityCoords[c];
+      if (!co) return;
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${co[0]}&longitude=${co[1]}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+        const j = await r.json();
+        let aqi = null;
+        try {
+          const ar = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${co[0]}&longitude=${co[1]}&current=us_aqi`);
+          const aj = await ar.json();
+          aqi = aj && aj.current ? aj.current.us_aqi : null;
+        } catch (e) {}
+        if (cancelled || !j || !j.current) return;
+        const m = wmo(j.current.weather_code);
+        setLiveWeather((prev) => ({
+          ...prev,
+          [c]: {
+            temp: Math.round(j.current.temperature_2m),
+            hi: Math.round(j.daily.temperature_2m_max[0]),
+            lo: Math.round(j.daily.temperature_2m_min[0]),
+            cond: m.cond,
+            icon: m.icon,
+            aqi: aqi != null ? Math.round(aqi) : (D.weather[c] ? D.weather[c].aqi : "—"),
+          },
+        }));
+      } catch (e) { /* keep static fallback */ }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Live exchange rate (open.er-api.com, free, no key) — falls back to the snapshot
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch("https://open.er-api.com/v6/latest/AUD");
+        const j = await r.json();
+        const vnd = j && j.rates ? j.rates.VND : null;
+        if (cancelled || !vnd) return;
+        const nr = Math.round(vnd);
+        setRate(nr);
+        setAud((a) => {
+          const v = parseFloat(a);
+          setVndStr(isNaN(v) ? "" : String(Math.round(v * nr)));
+          return a;
+        });
+      } catch (e) { /* keep snapshot */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Sanitizers — keep raw text in state so the user can edit freely.
   // sanitizeDec: digits + at most one decimal point (for AUD).
@@ -161,14 +236,14 @@ function Dashboard() {
     setAud(s);
     if (s === "" || s === ".") { setVndStr(""); return; }
     const v = parseFloat(s);
-    setVndStr(isNaN(v) ? "" : String(Math.round(v * RATE)));
+    setVndStr(isNaN(v) ? "" : String(Math.round(v * rate)));
   };
   const onVndChange = (e) => {
     const s = sanitizeInt(e.target.value);
     setVndStr(s);
     if (s === "") { setAud(""); return; }
     const v = parseFloat(s);
-    setAud(isNaN(v) ? "" : (v / RATE).toFixed(2));
+    setAud(isNaN(v) ? "" : (v / rate).toFixed(2));
   };
 
   const audSide = (
@@ -222,7 +297,7 @@ function Dashboard() {
         <div className="dash-fx">
           <div className="dash-head">
             <span className="label">AUD ⇄ VND</span>
-            <span className="label" style={{ color: "var(--fg-muted)" }}>1 A$ ≈ {RATE.toLocaleString()} ₫</span>
+            <span className="label" style={{ color: "var(--fg-muted)" }}>1 A$ ≈ {rate.toLocaleString()} ₫</span>
           </div>
           <div className="fx-row">
             {flipped ? vndSide : audSide}
@@ -244,8 +319,8 @@ function Dashboard() {
               <button
                 key={q}
                 onClick={() => {
-                  if (flipped) { setVndStr(String(q)); setAud((q / RATE).toFixed(2)); }
-                  else { setAud(String(q)); setVndStr(String(Math.round(q * RATE))); }
+                  if (flipped) { setVndStr(String(q)); setAud((q / rate).toFixed(2)); }
+                  else { setAud(String(q)); setVndStr(String(Math.round(q * rate))); }
                 }}
               >
                 {flipped ? `${(q/1000).toFixed(0)}k₫` : `A$${q}`}
@@ -905,22 +980,6 @@ function Phrases() {
   );
 }
 
-/* ===== MARQUEE ===================================== */
-function Marquee() {
-  const items = ["Saigon", "Mekong Delta", "Cu Chi", "Hanoi", "Hoan Kiem", "Hạ Long Bay", "Ninh Bình", "Temple of Literature", "Pho", "Banh Mi", "Egg Coffee"];
-  return (
-    <div className="marquee" aria-hidden="true">
-      <div className="marquee-track">
-        {[0,1].map((k) => items.map((t, i) => (
-          <React.Fragment key={k + "-" + i}>
-            <span>{t}</span><i>◆</i>
-          </React.Fragment>
-        )))}
-      </div>
-    </div>
-  );
-}
-
 /* ===== APP ========================================= */
 function App() {
   const [activeDay, setActiveDay] = useState(1);
@@ -957,25 +1016,6 @@ function App() {
     window.scrollTo({ top: window.innerHeight - 80, behavior: "smooth" });
   };
 
-  const [showTweaks, setShowTweaks] = useState(false);
-  const [themeLock, setThemeLock] = useState("auto"); // auto | day | night
-
-  // Tweaks panel: register listener, post available
-  useEffect(() => {
-    const onMsg = (e) => {
-      if (e.data?.type === "__activate_edit_mode") setShowTweaks(true);
-      if (e.data?.type === "__deactivate_edit_mode") setShowTweaks(false);
-    };
-    window.addEventListener("message", onMsg);
-    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
-    return () => window.removeEventListener("message", onMsg);
-  }, []);
-
-  useEffect(() => {
-    if (themeLock === "day") document.documentElement.setAttribute("data-theme", "day");
-    if (themeLock === "night") document.documentElement.setAttribute("data-theme", "night");
-  }, [themeLock]);
-
   return (
     <>
       <Hero onScrollDown={scrollPastHero} />
@@ -984,12 +1024,7 @@ function App() {
 
       <Itinerary
         onOpenMap={openMap}
-        onActiveDayChange={(n) => {
-          if (themeLock !== "auto") {
-            // user has overridden, still update active day for the bar
-          }
-          setActiveDay(n);
-        }}
+        onActiveDayChange={(n) => setActiveDay(n)}
       />
 
       <MapSection onOpenMap={() => { setFocusPin(null); setDrawerOpen(true); }} />
@@ -1010,41 +1045,6 @@ function App() {
       </footer>
 
       <MapDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} focusId={focusPin} />
-
-      {showTweaks && (
-        <div style={{
-          position: "fixed", right: 14, bottom: 14, zIndex: 200,
-          background: "var(--card)", color: "var(--card-fg)",
-          border: "1px solid var(--rule)", padding: 16, width: 240,
-          boxShadow: "0 20px 50px -20px rgba(0,0,0,0.45)",
-          fontFamily: "Manrope, sans-serif",
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-            <span className="label">Tweaks</span>
-            <button onClick={() => { setShowTweaks(false); window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*"); }} aria-label="Close">
-              <Icon.Close s={14}/>
-            </button>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <span className="label" style={{ color: "var(--fg-muted)" }}>Theme</span>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
-              {["auto", "day", "night"].map((m) => (
-                <button key={m}
-                  className="btn-ghost"
-                  style={{ background: themeLock === m ? "var(--fg)" : "transparent", color: themeLock === m ? "var(--bg)" : "inherit" }}
-                  onClick={() => setThemeLock(m)}>
-                  {m}
-                </button>
-              ))}
-            </div>
-            <span className="label" style={{ color: "var(--fg-muted)", marginTop: 8 }}>Jump</span>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-              <button className="btn-ghost" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Top</button>
-              <button className="btn-ghost" onClick={() => jumpToDay(7)}>Ha Long ★</button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

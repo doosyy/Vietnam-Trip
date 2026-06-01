@@ -277,7 +277,8 @@ window.TRIP_DATA = {
     { vn: "Tôi không hiểu", say: "toy khome hyew", en: "I don't understand" },
   ],
 
-  // Weather mocked — varies with current city. Real fetch on a private site is overkill.
+  // Fallback weather only — live values are fetched from Open-Meteo in the app.
+  // These show if the live fetch fails or before it resolves.
   weather: {
     "Ho Chi Minh City": { temp: 32, lo: 26, hi: 34, cond: "Humid · scattered storms PM", icon: "storm", aqi: 78 },
     "Hanoi": { temp: 29, lo: 25, hi: 33, cond: "Hot · muggy", icon: "sun", aqi: 95 },

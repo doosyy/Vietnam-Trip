@@ -1,0 +1,14 @@
+{
+  "name": "The Doos · Vietnam '26",
+  "short_name": "Vietnam '26",
+  "description": "Family trip to Vietnam, June 2026 — itinerary, flights, hotels and map.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16100A",
+  "theme_color": "#16100A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
