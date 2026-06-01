@@ -537,85 +537,81 @@ function Itinerary({ onOpenMap, onActiveDayChange }) {
 /* ===== REGIONAL MAP (per day trip) ============================ */
 function RegionalMap({ region }) {
   if (!region) return null;
-  const { base, dest, bearing, distance, duration, transport, terrain } = region;
+  const { base, dest, bearing, distance, duration, transport } = region;
 
-  // Auto-curve control point — bulge perpendicular to the line so the route reads as an arc
-  const midX = (base.x + dest.x) / 2;
-  const midY = (base.y + dest.y) / 2;
-  const dx = dest.x - base.x;
-  const dy = dest.y - base.y;
-  const len = Math.sqrt(dx*dx + dy*dy) || 1;
-  // Perpendicular offset (right-hand of direction of travel)
-  const nx = -dy / len;
-  const ny = dx / len;
-  const bulge = Math.min(60, len * 0.18);
-  const cx = midX + nx * bulge;
-  const cy = midY + ny * bulge;
+  const elRef = useRef(null);
+  const mapRef = useRef(null);
+  const tileRef = useRef(null);
+  const lineRef = useRef(null);
 
-  // Terrain backdrop element — subtle, varies per trip. Drawn within 500×300 viewBox.
-  const terrainEl = () => {
-    switch (terrain) {
-      case "river":
-        return (
-          <g opacity="0.4" stroke="var(--accent-2)" strokeWidth="2.5" fill="none" strokeLinecap="round">
-            <path d="M -20 210 Q 80 200 140 220 T 300 230 T 520 240" />
-            <path d="M -20 245 Q 100 235 180 255 T 340 265 T 520 270" strokeWidth="1.5" opacity="0.7" />
-            <path d="M -20 275 Q 90 265 170 285 T 320 290 T 520 295" strokeWidth="1" opacity="0.55" />
-          </g>
-        );
-      case "bay":
-        return (
-          <g opacity="0.45">
-            {/* Coast — east side of viewBox is the sea */}
-            <path d="M 340 0 Q 360 60 340 120 Q 320 180 360 240 L 360 300 L 0 300 L 0 0 Z" fill="var(--bg-2)" opacity="0.5"/>
-            <path d="M 340 0 Q 360 60 340 120 Q 320 180 360 240 L 360 300" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.7"/>
-            {/* Limestone karst dots in the bay */}
-            <g fill="currentColor" opacity="0.55">
-              <circle cx="385" cy="120" r="5"/>
-              <circle cx="405" cy="145" r="4"/>
-              <circle cx="395" cy="195" r="6"/>
-              <circle cx="445" cy="135" r="5"/>
-              <circle cx="465" cy="180" r="4"/>
-              <circle cx="420" cy="220" r="3"/>
-              <circle cx="475" cy="220" r="4"/>
-              <circle cx="490" cy="155" r="3"/>
-            </g>
-          </g>
-        );
-      case "karst":
-        return (
-          <g opacity="0.5" fill="currentColor">
-            {/* Triangular karst peaks scattered in the destination region */}
-            <g opacity="0.55">
-              <polygon points="130,220 145,190 160,220"/>
-              <polygon points="160,232 180,198 200,232"/>
-              <polygon points="200,224 215,200 230,224"/>
-              <polygon points="110,232 125,210 140,232"/>
-              <polygon points="225,222 240,200 255,222"/>
-              <polygon points="85,225 100,205 115,225"/>
-            </g>
-            {/* River through paddies */}
-            <path d="M 60 240 Q 140 230 200 250 T 360 260" stroke="var(--accent-2)" strokeWidth="2" fill="none" opacity="0.55"/>
-          </g>
-        );
-      case "jungle":
-      default:
-        // Jungle cover concentrated around the Cu Chi destination at (130,80).
-        return (
-          <g opacity="0.45" fill="currentColor">
-            {[[110,55],[140,90],[80,100],[160,55],[100,80],[130,115],[170,90],[90,70],[180,70],[120,40],[60,80],[155,115]].map(([x,y],i) => (
-              <circle key={i} cx={x} cy={y} r="6"/>
-            ))}
-          </g>
-        );
-    }
-  };
+  const tileUrl = (dark) =>
+    dark
+      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+  const isNight = () => document.documentElement.getAttribute("data-theme") === "night";
+  const accentColor = () =>
+    getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#C8102E";
+
+  useEffect(() => {
+    if (!window.L || !elRef.current || mapRef.current) return;
+    if (base.lat == null || dest.lat == null) return;
+    const L = window.L;
+    const a = [base.lat, base.lng];
+    const b = [dest.lat, dest.lng];
+
+    const map = L.map(elRef.current, {
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      tap: false,
+    });
+    mapRef.current = map;
+
+    tileRef.current = L.tileLayer(tileUrl(isNight()), {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap, &copy; CARTO',
+    }).addTo(map);
+
+    lineRef.current = L.polyline([a, b], {
+      color: accentColor(),
+      weight: 3,
+      opacity: 0.85,
+      dashArray: "2 8",
+      lineCap: "round",
+    }).addTo(map);
+
+    const baseIcon = L.divIcon({ className: "seg-pin seg-base", html: "<span></span>", iconSize: [18, 18], iconAnchor: [9, 9] });
+    const destIcon = L.divIcon({ className: "seg-pin seg-dest", html: "<span>★</span>", iconSize: [24, 24], iconAnchor: [12, 12] });
+    L.marker(a, { icon: baseIcon }).addTo(map).bindTooltip(`${base.name} · BASE`, { direction: "top", offset: [0, -10], className: "trip-tip" });
+    L.marker(b, { icon: destIcon }).addTo(map).bindTooltip(`${dest.name} · ${distance}, ${duration}`, { direction: "top", offset: [0, -14], className: "trip-tip" });
+
+    map.fitBounds([a, b], { padding: [46, 46] });
+
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(elRef.current);
+    const mo = new MutationObserver(() => {
+      tileRef.current && tileRef.current.setUrl(tileUrl(isNight()));
+      lineRef.current && lineRef.current.setStyle({ color: accentColor() });
+    });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
 
   return (
     <div className="region-map reveal">
       <div className="region-map-head">
         <div className="region-map-eyebrow">
-          <span className="label">Day Trip Route</span>
+          <span className="label">Travel Route</span>
         </div>
         <div className="region-map-stats">
           <div><span className="label">Bearing</span><b>{bearing}</b></div>
@@ -626,70 +622,7 @@ function RegionalMap({ region }) {
       </div>
 
       <div className="region-map-canvas">
-        <svg viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <pattern id="r-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="currentColor" strokeWidth="0.4" opacity="0.18"/>
-            </pattern>
-            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto">
-              <polygon points="0 0, 8 5, 0 10" fill="var(--accent)" />
-            </marker>
-          </defs>
-          <rect width="500" height="300" fill="url(#r-grid)" />
-
-          {terrainEl()}
-
-          {/* Route line — base → destination, curved */}
-          <path
-            d={`M ${base.x} ${base.y} Q ${cx} ${cy} ${dest.x} ${dest.y}`}
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="2.5"
-            strokeDasharray="6 5"
-            strokeLinecap="square"
-            markerEnd="url(#arrowhead)"
-          />
-
-          {/* Base pin (open square) */}
-          <g transform={`translate(${base.x}, ${base.y})`}>
-            <rect x="-9" y="-9" width="18" height="18" fill="var(--bg)" stroke="currentColor" strokeWidth="2"/>
-            <circle cx="0" cy="0" r="2.5" fill="currentColor"/>
-            {base.x > 320 ? (
-              <>
-                <text x="-14" y="4" fontFamily="Bricolage Grotesque, sans-serif" fontSize="14" fontWeight="700" fill="currentColor" textAnchor="end">{base.name}</text>
-                <text x="-14" y="18" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="1" fill="currentColor" opacity="0.55" textAnchor="end">BASE</text>
-              </>
-            ) : (
-              <>
-                <text x="14" y="4" fontFamily="Bricolage Grotesque, sans-serif" fontSize="14" fontWeight="700" fill="currentColor">{base.name}</text>
-                <text x="14" y="18" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="1" fill="currentColor" opacity="0.55">BASE</text>
-              </>
-            )}
-          </g>
-
-          {/* Destination pin (filled accent) */}
-          <g transform={`translate(${dest.x}, ${dest.y})`}>
-            <rect x="-11" y="-11" width="22" height="22" fill="var(--accent)"/>
-            <text x="0" y="4" fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="700" fill="#fff" textAnchor="middle">★</text>
-            {dest.x > 320 ? (
-              <>
-                <text x="-16" y="4" fontFamily="Bricolage Grotesque, sans-serif" fontSize="14" fontWeight="700" fill="currentColor" textAnchor="end">{dest.name}</text>
-                <text x="-16" y="18" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="1" fill="currentColor" opacity="0.55" textAnchor="end">DESTINATION</text>
-              </>
-            ) : (
-              <>
-                <text x="16" y="4" fontFamily="Bricolage Grotesque, sans-serif" fontSize="14" fontWeight="700" fill="currentColor">{dest.name}</text>
-                <text x="16" y="18" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="1" fill="currentColor" opacity="0.55">DESTINATION</text>
-              </>
-            )}
-          </g>
-
-          {/* Distance label on the route midpoint */}
-          <g transform={`translate(${cx}, ${cy})`}>
-            <rect x="-32" y="-11" width="64" height="22" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.5"/>
-            <text x="0" y="4" fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" letterSpacing="1" fill="var(--accent)" textAnchor="middle">{distance}</text>
-          </g>
-        </svg>
+        <div ref={elRef} className="leaflet-stage" role="img" aria-label={`Route from ${base.name} to ${dest.name}`} />
       </div>
     </div>
   );

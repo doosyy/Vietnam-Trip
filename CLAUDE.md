@@ -18,8 +18,8 @@ Multi-file React app, no build step. React + Babel transpile JSX in-browser via 
 
 ## Maps
 - `VietnamMap` in `trip-app.jsx` is a **Leaflet** map (not SVG). Reads `D.mapPins` (lat/lng) + `D.routeOrder`. Numbered markers + dashed route polyline. Tile layer swaps light/dark with `data-theme`; route colour tracks `--accent`. Uses a ResizeObserver + `invalidateSize()` so it renders correctly inside the off-screen drawer. `interactive={false}` for the mini preview in the Route section.
-- Do NOT add global `svg { width:100%; height:100% }` rules scoped to `.map-mini`/`.map-full` — they blow up Leaflet's internal attribution flag SVG. (Removed for this reason.)
-- `RegionalMap` (per-day segment diagram) is still the original abstract SVG with travel stats, not Leaflet.
+- Do NOT add global `svg { width:100%; height:100% }` rules scoped to `.map-mini`/`.map-full`/`.region-map-canvas` — they blow up Leaflet's internal attribution flag SVG. (Removed for this reason.)
+- `RegionalMap` (per-day segment map) is also **Leaflet** now: static (no drag/zoom), base + dest markers (`.seg-base`/`.seg-dest`), dashed line, fit to both points. Reads `region.base`/`region.dest` `{name, lat, lng}`. The travel-stats panel (bearing/distance/duration/transport) sits above it and is the source of the travel times.
 
 ## Deploy
 GitHub Pages: `doosyy.github.io/Vietnam-Trip/`. Push to deploy:

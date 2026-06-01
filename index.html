@@ -668,7 +668,6 @@
       overflow: hidden;
     }
     @media (min-width: 720px) { .region-map-canvas { aspect-ratio: 2/1; } }
-    .region-map-canvas svg { width: 100%; height: 100%; display: block; }
 
     /* === HOTELS ================================================ */
     .hotel-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
@@ -752,6 +751,11 @@
       box-shadow: 0 1px 5px rgba(0,0,0,0.35);
     }
     .trip-pin.active span { transform: scale(1.18); box-shadow: 0 2px 9px rgba(0,0,0,0.45); }
+    .seg-pin { background: none; border: 0; }
+    .seg-pin span { display: grid; place-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.35); }
+    .seg-base span { width: 18px; height: 18px; background: var(--card); border: 2px solid var(--fg); border-radius: 50%; }
+    .seg-base span::after { content: ""; width: 5px; height: 5px; background: var(--fg); border-radius: 50%; }
+    .seg-dest span { width: 24px; height: 24px; background: var(--accent); color: #fff; font-size: 13px; line-height: 1; border: 2px solid var(--card); }
     .leaflet-tooltip.trip-tip {
       background: var(--card); color: var(--card-fg);
       border: 1px solid var(--rule); border-radius: 0;

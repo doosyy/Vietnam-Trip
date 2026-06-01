@@ -80,8 +80,8 @@ window.TRIP_DATA = {
       tags: ["History", "Outdoors"], mood: "day",
       hero: "https://doosyy.github.io/Vietnam-Trip/img/cu-chi.jpg",
       region: {
-        base: { name: "Ho Chi Minh City", x: 380, y: 230 },
-        dest: { name: "Cu Chi Tunnels", x: 130, y: 80 },
+        base: { name: "Ho Chi Minh City", lat: 10.7769, lng: 106.7009 },
+        dest: { name: "Cu Chi Tunnels", lat: 11.1426, lng: 106.4634 },
         bearing: "Northwest",
         distance: "70 km",
         duration: "~1.5 hr drive",
@@ -100,8 +100,8 @@ window.TRIP_DATA = {
       tags: ["Nature", "Food", "Relaxed"], mood: "day",
       hero: "https://doosyy.github.io/Vietnam-Trip/img/mekong-boat.jpg",
       region: {
-        base: { name: "Ho Chi Minh City", x: 360, y: 70 },
-        dest: { name: "Mỹ Tho · Mekong", x: 160, y: 230 },
+        base: { name: "Ho Chi Minh City", lat: 10.7769, lng: 106.7009 },
+        dest: { name: "Mỹ Tho · Mekong", lat: 10.3600, lng: 106.3650 },
         bearing: "South",
         distance: "70 km",
         duration: "~1.5 hr drive",
@@ -153,8 +153,8 @@ window.TRIP_DATA = {
       tags: ["Nature", "Food", "Unmissable"], mood: "day", star: true,
       hero: "https://doosyy.github.io/Vietnam-Trip/img/halong-bay.jpg",
       region: {
-        base: { name: "Hanoi · Old Quarter", x: 80, y: 150 },
-        dest: { name: "Hạ Long City", x: 430, y: 165 },
+        base: { name: "Hanoi · Old Quarter", lat: 21.0278, lng: 105.8342 },
+        dest: { name: "Hạ Long City", lat: 20.9101, lng: 107.1839 },
         bearing: "East",
         distance: "170 km",
         duration: "~3.5 hr drive",
@@ -183,8 +183,8 @@ window.TRIP_DATA = {
       tags: ["Nature", "History", "Scenic"], mood: "day",
       hero: "https://doosyy.github.io/Vietnam-Trip/img/ninh-binh.jpg",
       region: {
-        base: { name: "Hanoi · Old Quarter", x: 380, y: 65 },
-        dest: { name: "Trang An · Ninh Binh", x: 175, y: 235 },
+        base: { name: "Hanoi · Old Quarter", lat: 21.0278, lng: 105.8342 },
+        dest: { name: "Trang An · Ninh Binh", lat: 20.2506, lng: 105.9745 },
         bearing: "South",
         distance: "95 km",
         duration: "~2 hr drive",
