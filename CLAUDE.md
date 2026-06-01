@@ -47,6 +47,12 @@ GitHub Pages: `doosyy.github.io/Vietnam-Trip/`. If you edited any `.jsx`, run `.
 - `useTripPhase()` recomputes every second from `departDate`/`returnDate`. Hero shows: **before** = countdown; **during** = `.trip-status` "Day N of 13 · We're in Vietnam"; **after** = "Until next time" wrap. Don't let the countdown render at 00:00:00.
 - Trip forecast fetch uses `forecast_days=16` + `past_days=14`, so days already passed during the trip show their **actual** recorded weather (`state:"actual"`). `dayWeather` compares the day's ISO to today: future-in-window = `ok`, future-beyond = `soon` ("Forecast nearer the date"), past-with-data = `actual`, past-no-data = `past` ("Trip day complete").
 
+## Photos
+- All `img/*.jpg` are baked with a "Warm Editorial" grade (warm WB, gentle contrast, matte lift, subtle vignette) and capped at 1600px / ~q84 (whole set ~4 MB). To re-grade, restore from the local backup and re-run the grade.
+- Originals + photo-sourcing scratch live in `_photo-samples/` (gitignored): `_originals/` = pre-grade backups, `_dl/` = sourced candidates.
+- `halong-bay.jpg` = real Ha Long seascape (hero, Day 9, OG). `halong-cruise.jpg` = junk-boat deck (Day 8). The old `halong-bay.jpg` was actually Ninh Binh/Trang An (mislabelled).
+- Sourced location photos are Wikimedia Commons (open licence); footer carries a credit line. `og-cover.jpg` is generated from `img/halong-bay.jpg` via PIL.
+
 ## Data shapes
 - An itinerary `activity` can have `link` (label → opens the map drawer on a matching pin) and/or `url` (external link → renders a "Tour details" button opening in a new tab). Both, either, or neither.
 
