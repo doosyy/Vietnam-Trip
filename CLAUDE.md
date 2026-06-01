@@ -23,7 +23,8 @@ Multi-file React app. JSX is **precompiled** to plain JS by `./build.sh` (esbuil
 - No Babel (precompiled — see Build).
 
 ## Live data (free, no API key, with fallback)
-- **Weather**: Open-Meteo forecast + air-quality APIs, fetched per city in `Dashboard`. `cityCoords` must have an entry for every `D.weather` key. Falls back to the static `D.weather` values if the fetch fails.
+- **Weather (dashboard, current)**: Open-Meteo forecast + air-quality APIs, fetched per city in `Dashboard`. `cityCoords` must have an entry for every `D.weather` key. Falls back to static `D.weather` on failure. `window.wmoWeather(code)` (in `trip-icons.jsx`) maps WMO codes → `{icon, cond}`.
+- **Trip forecast (per day)**: `useTripForecast()` fetches Open-Meteo 16-day daily for the 4 trip locations (`WX_LOCS`). Each itinerary day shows a `.wx-chip` (hi/lo + icon, or "Forecast nearer the date" if the date is beyond the 16-day window). Tapping any chip opens `WeatherDrawer` (reuses `.drawer` shell) with a `.wx-strip` of all 13 days. Open-Meteo only forecasts 16 days out, so the back of the trip is a placeholder until it enters the window. `dayLocId(city)` maps a day to a location; `dayIso(d)` builds the `2026-06-DD` date.
 - **Exchange rate**: `open.er-api.com/v6/latest/AUD`, fetched in `Dashboard` into `rate` state (init `16450` snapshot as fallback).
 
 ## Maps

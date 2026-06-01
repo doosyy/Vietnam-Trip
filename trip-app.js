@@ -65,6 +65,66 @@ function useParallax(ref, factor = 0.35) {
     };
   }, [ref, factor]);
 }
+const WX_LOCS = {
+  hcmc: [10.7769, 106.7009],
+  hanoi: [21.0278, 105.8342],
+  halong: [20.9101, 107.1839],
+  ninhbinh: [20.2506, 105.9745]
+};
+function dayLocId(city) {
+  const c = (city || "").toLowerCase();
+  if (c.includes("long")) return "halong";
+  if (c.includes("ninh binh")) return "ninhbinh";
+  if (c.includes("chi minh") || c.includes("hcmc") || c.includes("mekong") || c.includes("cu chi")) return "hcmc";
+  return "hanoi";
+}
+function dayIso(d) {
+  return `2026-06-${String(parseInt(d.date, 10)).padStart(2, "0")}`;
+}
+function dayWeather(forecast, d) {
+  if (!forecast) return { state: "loading" };
+  const e = forecast[dayLocId(d.city)] && forecast[dayLocId(d.city)][dayIso(d)];
+  if (e) {
+    const w = window.wmoWeather(e.code);
+    return { state: "ok", hi: e.hi, lo: e.lo, icon: w.icon, cond: w.cond };
+  }
+  return { state: "soon" };
+}
+function shortCity(c) {
+  return (c || "").split("\u2192")[0].trim().replace("Ho Chi Minh City", "HCMC");
+}
+function useTripForecast() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const out = {};
+      await Promise.all(Object.entries(WX_LOCS).map(async ([id, [la, lo]]) => {
+        try {
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=16`);
+          const j = await r.json();
+          const m = {};
+          const t = j && j.daily && j.daily.time || [];
+          t.forEach((iso, i) => {
+            m[iso] = {
+              hi: Math.round(j.daily.temperature_2m_max[i]),
+              lo: Math.round(j.daily.temperature_2m_min[i]),
+              code: j.daily.weather_code[i]
+            };
+          });
+          out[id] = m;
+        } catch (e) {
+          out[id] = {};
+        }
+      }));
+      if (!cancelled) setData(out);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return data;
+}
 function Hero({ onScrollDown }) {
   const bgRef = useRef(null);
   useParallax(bgRef, 0.32);
@@ -90,18 +150,7 @@ function Dashboard() {
   };
   useEffect(() => {
     let cancelled = false;
-    const wmo = (code) => {
-      if (code === 0) return { icon: "sun", cond: "Clear" };
-      if (code === 1) return { icon: "sun", cond: "Mainly clear" };
-      if (code === 2) return { icon: "cloud-sun", cond: "Partly cloudy" };
-      if (code === 3) return { icon: "cloud", cond: "Overcast" };
-      if (code >= 45 && code <= 48) return { icon: "cloud", cond: "Fog" };
-      if (code >= 51 && code <= 57) return { icon: "cloud", cond: "Drizzle" };
-      if (code >= 61 && code <= 67) return { icon: "storm", cond: "Rain" };
-      if (code >= 80 && code <= 82) return { icon: "storm", cond: "Showers" };
-      if (code >= 95) return { icon: "storm", cond: "Thunderstorm" };
-      return { icon: "cloud", cond: "Cloudy" };
-    };
+    const wmo = window.wmoWeather;
     cities.forEach(async (c) => {
       const co = cityCoords[c];
       if (!co) return;
@@ -302,7 +351,7 @@ function Activity({ a, onLinkOpenMap }) {
   const isClockTime = /^\d{1,2}:\d{2}$/.test(a.time);
   return /* @__PURE__ */ React.createElement("div", { className: `activity ${open ? "open" : ""}` }, /* @__PURE__ */ React.createElement("button", { className: "activity-toggle", onClick: () => setOpen((o) => !o), "aria-expanded": open }, /* @__PURE__ */ React.createElement("span", { className: `activity-time ${isClockTime ? "is-clock" : "is-fuzzy"}` }, a.time), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { className: `activity-mood mood-${a.mood}` }), /* @__PURE__ */ React.createElement("span", { className: "activity-title" }, a.title)), /* @__PURE__ */ React.createElement("span", { className: "activity-caret" }, /* @__PURE__ */ React.createElement(Icon.Plus, { s: 16 }))), /* @__PURE__ */ React.createElement("div", { className: "activity-body" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "activity-detail" }, a.detail, a.link && /* @__PURE__ */ React.createElement("div", { className: "activity-actions" }, /* @__PURE__ */ React.createElement("button", { className: "btn-ghost", onClick: () => onLinkOpenMap == null ? void 0 : onLinkOpenMap(a.link) }, /* @__PURE__ */ React.createElement(Icon.Map, { s: 11 }), " \xA0 View on Map"))))));
 }
-function Itinerary({ onOpenMap, onActiveDayChange }) {
+function Itinerary({ onOpenMap, onActiveDayChange, forecast, onOpenWeather }) {
   useEffect(() => {
     const blocks = document.querySelectorAll(".day-block");
     const moods = {};
@@ -333,7 +382,10 @@ function Itinerary({ onOpenMap, onActiveDayChange }) {
     blocks.forEach((b) => io.observe(b));
     return () => io.disconnect();
   }, []);
-  return /* @__PURE__ */ React.createElement("section", { className: "section", id: "itinerary" }, /* @__PURE__ */ React.createElement("div", { className: "section-head reveal" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label eyebrow" }, "01 \u2014 Day by Day"), /* @__PURE__ */ React.createElement("h2", { className: "section-title" }, "The plan, hour by hour.")), /* @__PURE__ */ React.createElement("p", { className: "section-blurb" }, "Tap any activity for details, notes, and timing. The site shifts to a darker tone as the day moves toward evening \u2014 easier on the eyes when you're reading after dinner.")), /* @__PURE__ */ React.createElement("div", null, D.days.map((d) => /* @__PURE__ */ React.createElement("article", { key: d.n, className: "day-block", id: `day-${d.n}`, "data-day": d.n, "data-mood": d.mood }, /* @__PURE__ */ React.createElement("div", { className: "day-anchor" }, /* @__PURE__ */ React.createElement("div", { className: "day-anchor-head" }, /* @__PURE__ */ React.createElement("div", { className: "day-num" }, String(d.n).padStart(2, "0")), /* @__PURE__ */ React.createElement("div", { className: "day-meta" }, /* @__PURE__ */ React.createElement("div", { className: "day-city" }, /* @__PURE__ */ React.createElement("span", { className: "day-city-name" }, d.city), /* @__PURE__ */ React.createElement("span", { className: "day-city-sep" }, "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "day-city-date" }, d.weekday, " ", d.date)), /* @__PURE__ */ React.createElement("div", { className: "day-title" }, d.title), /* @__PURE__ */ React.createElement("div", { className: "day-tags" }, d.star && /* @__PURE__ */ React.createElement("span", { className: "day-tag unmissable" }, "\u2605 Unmissable"), d.tags.map((t) => /* @__PURE__ */ React.createElement("span", { key: t, className: "day-tag" }, t))))), /* @__PURE__ */ React.createElement("div", { className: "day-hero reveal-img" }, /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("section", { className: "section", id: "itinerary" }, /* @__PURE__ */ React.createElement("div", { className: "section-head reveal" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label eyebrow" }, "01 \u2014 Day by Day"), /* @__PURE__ */ React.createElement("h2", { className: "section-title" }, "The plan, hour by hour.")), /* @__PURE__ */ React.createElement("p", { className: "section-blurb" }, "Tap any activity for details, notes, and timing. The site shifts to a darker tone as the day moves toward evening \u2014 easier on the eyes when you're reading after dinner.")), /* @__PURE__ */ React.createElement("div", null, D.days.map((d) => /* @__PURE__ */ React.createElement("article", { key: d.n, className: "day-block", id: `day-${d.n}`, "data-day": d.n, "data-mood": d.mood }, /* @__PURE__ */ React.createElement("div", { className: "day-anchor" }, /* @__PURE__ */ React.createElement("div", { className: "day-anchor-head" }, /* @__PURE__ */ React.createElement("div", { className: "day-num" }, String(d.n).padStart(2, "0")), /* @__PURE__ */ React.createElement("div", { className: "day-meta" }, /* @__PURE__ */ React.createElement("div", { className: "day-city" }, /* @__PURE__ */ React.createElement("span", { className: "day-city-name" }, d.city), /* @__PURE__ */ React.createElement("span", { className: "day-city-sep" }, "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "day-city-date" }, d.weekday, " ", d.date)), /* @__PURE__ */ React.createElement("div", { className: "day-title" }, d.title), /* @__PURE__ */ React.createElement("div", { className: "day-tags" }, d.star && /* @__PURE__ */ React.createElement("span", { className: "day-tag unmissable" }, "\u2605 Unmissable"), d.tags.map((t) => /* @__PURE__ */ React.createElement("span", { key: t, className: "day-tag" }, t))), (() => {
+    const wx = dayWeather(forecast, d);
+    return /* @__PURE__ */ React.createElement("button", { className: `wx-chip ${wx.state === "ok" ? "" : "wx-chip--soon"}`, onClick: onOpenWeather, title: "See the full trip forecast" }, wx.state === "ok" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "wx-ico" }, window.weatherIcon(wx.icon, 16)), /* @__PURE__ */ React.createElement("b", null, wx.hi, "\xB0"), /* @__PURE__ */ React.createElement("span", { className: "wx-lo" }, wx.lo, "\xB0"), /* @__PURE__ */ React.createElement("span", { className: "wx-cond" }, wx.cond)) : wx.state === "loading" ? /* @__PURE__ */ React.createElement("span", { className: "wx-soon" }, "Loading forecast\u2026") : /* @__PURE__ */ React.createElement("span", { className: "wx-soon" }, "Forecast nearer the date"));
+  })())), /* @__PURE__ */ React.createElement("div", { className: "day-hero reveal-img" }, /* @__PURE__ */ React.createElement(
     "image-slot",
     {
       id: `day-${d.n}-hero`,
@@ -527,6 +579,19 @@ function MapDrawer({ open, onClose, focusId }) {
   };
   return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: `drawer-scrim ${open ? "open" : ""}`, onClick: onClose }), /* @__PURE__ */ React.createElement("div", { ref: drawerRef, className: `drawer ${open ? "open" : ""}`, role: "dialog", "aria-label": "Trip Map" }, /* @__PURE__ */ React.createElement("div", { className: "drawer-handle", onTouchStart, onTouchMove, onTouchEnd }, /* @__PURE__ */ React.createElement("div", null)), /* @__PURE__ */ React.createElement("div", { className: "drawer-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label", style: { color: "var(--fg-muted)" } }, "The Route"), /* @__PURE__ */ React.createElement("div", { className: "drawer-title" }, "South \u2192 North \xB7 6 stops")), /* @__PURE__ */ React.createElement("button", { className: "drawer-close", onClick: onClose, "aria-label": "Close" }, /* @__PURE__ */ React.createElement(Icon.Close, null))), /* @__PURE__ */ React.createElement("div", { className: "drawer-body" }, /* @__PURE__ */ React.createElement("div", { className: "map-full", style: { color: "var(--fg)" } }, /* @__PURE__ */ React.createElement(VietnamMap, { activeId: focusId })), /* @__PURE__ */ React.createElement("div", { className: "map-legend" }, D.mapPins.map((p, i) => /* @__PURE__ */ React.createElement("div", { key: p.id, className: "map-legend-item" }, /* @__PURE__ */ React.createElement("span", { className: "n" }, i + 1), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, p.label), /* @__PURE__ */ React.createElement("span", null, p.sub)), /* @__PURE__ */ React.createElement("em", null, p.id.toUpperCase())))))));
 }
+function WeatherDrawer({ open, onClose, forecast }) {
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: `drawer-scrim ${open ? "open" : ""}`, onClick: onClose }), /* @__PURE__ */ React.createElement("div", { className: `drawer ${open ? "open" : ""}`, role: "dialog", "aria-label": "Trip Forecast" }, /* @__PURE__ */ React.createElement("div", { className: "drawer-handle" }, /* @__PURE__ */ React.createElement("div", null)), /* @__PURE__ */ React.createElement("div", { className: "drawer-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label", style: { color: "var(--fg-muted)" } }, "Weather"), /* @__PURE__ */ React.createElement("div", { className: "drawer-title" }, "Trip forecast \xB7 13 days")), /* @__PURE__ */ React.createElement("button", { className: "drawer-close", onClick: onClose, "aria-label": "Close" }, /* @__PURE__ */ React.createElement(Icon.Close, null))), /* @__PURE__ */ React.createElement("div", { className: "wx-body" }, /* @__PURE__ */ React.createElement("div", { className: "wx-strip" }, D.days.map((d) => {
+    const wx = dayWeather(forecast, d);
+    return /* @__PURE__ */ React.createElement("div", { key: d.n, className: `wx-tile ${d.star ? "star" : ""}` }, /* @__PURE__ */ React.createElement("div", { className: "wx-tile-top" }, /* @__PURE__ */ React.createElement("span", { className: "wx-tile-day" }, "D", String(d.n).padStart(2, "0")), d.star && /* @__PURE__ */ React.createElement("span", { className: "wx-tile-star" }, "\u2605")), /* @__PURE__ */ React.createElement("div", { className: "wx-tile-date" }, d.weekday, " ", d.date), /* @__PURE__ */ React.createElement("div", { className: "wx-tile-city" }, shortCity(d.city)), wx.state === "ok" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "wx-tile-ico" }, window.weatherIcon(wx.icon, 28)), /* @__PURE__ */ React.createElement("div", { className: "wx-tile-temp" }, /* @__PURE__ */ React.createElement("b", null, wx.hi, "\xB0"), /* @__PURE__ */ React.createElement("span", null, wx.lo, "\xB0")), /* @__PURE__ */ React.createElement("div", { className: "wx-tile-cond" }, wx.cond)) : /* @__PURE__ */ React.createElement("div", { className: "wx-tile-soon" }, wx.state === "loading" ? "Loading\u2026" : "Forecast nearer the date"));
+  })), /* @__PURE__ */ React.createElement("p", { className: "wx-note" }, "Live 16-day forecast from Open-Meteo. Dates beyond the 16-day window fill in automatically as the trip gets closer."))));
+}
 function Hotels() {
   return /* @__PURE__ */ React.createElement("section", { className: "section", id: "hotels" }, /* @__PURE__ */ React.createElement("div", { className: "section-head reveal" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label eyebrow" }, "04 \u2014 Where We Sleep"), /* @__PURE__ */ React.createElement("h2", { className: "section-title" }, "Three booked.", /* @__PURE__ */ React.createElement("br", null), "One to confirm.")), /* @__PURE__ */ React.createElement("p", { className: "section-blurb" }, "HCMC, the first Hanoi stay and the Ha Long cruise are all locked in. Just the final Hanoi stay left to book.")), /* @__PURE__ */ React.createElement("div", { className: "hotel-grid" }, D.hotels.map((h, i) => /* @__PURE__ */ React.createElement("article", { key: i, className: "hotel-card reveal" }, /* @__PURE__ */ React.createElement("div", { className: `hotel-status ${h.booked ? "booked" : "tbc"}` }, h.booked ? "Booked" : "To Book"), /* @__PURE__ */ React.createElement("div", { className: "label", style: { color: "var(--fg-muted)" } }, h.city), /* @__PURE__ */ React.createElement("h3", { className: "hotel-name" }, h.name), /* @__PURE__ */ React.createElement("div", { className: "mono", style: { fontSize: 11, letterSpacing: ".12em", color: "var(--fg-muted)" } }, h.dates.toUpperCase()), /* @__PURE__ */ React.createElement("div", { className: "hotel-tags" }, h.tags.map((t) => /* @__PURE__ */ React.createElement("span", { key: t }, t))), /* @__PURE__ */ React.createElement("p", { style: { margin: "4px 0 0", fontSize: 14, color: "var(--fg-muted)" } }, h.note)))));
 }
@@ -537,7 +602,9 @@ function App() {
   const [activeDay, setActiveDay] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [focusPin, setFocusPin] = useState(null);
+  const [weatherOpen, setWeatherOpen] = useState(false);
   const dashRef = useRef(null);
+  const forecast = useTripForecast();
   useReveal();
   const jumpToDay = (n) => {
     const el = document.getElementById(`day-${n}`);
@@ -565,12 +632,14 @@ function App() {
     Itinerary,
     {
       onOpenMap: openMap,
-      onActiveDayChange: (n) => setActiveDay(n)
+      onActiveDayChange: (n) => setActiveDay(n),
+      forecast,
+      onOpenWeather: () => setWeatherOpen(true)
     }
   ), /* @__PURE__ */ React.createElement(MapSection, { onOpenMap: () => {
     setFocusPin(null);
     setDrawerOpen(true);
-  } }), /* @__PURE__ */ React.createElement(Flights, null), /* @__PURE__ */ React.createElement(Hotels, null), /* @__PURE__ */ React.createElement(Phrases, null), /* @__PURE__ */ React.createElement("footer", { className: "foot" }, /* @__PURE__ */ React.createElement("div", { className: "label eyebrow" }, "06 \u2014 End of File"), /* @__PURE__ */ React.createElement("div", { className: "foot-title" }, "See you on", /* @__PURE__ */ React.createElement("br", null), "the other side."), /* @__PURE__ */ React.createElement("p", { style: { margin: 0, color: "var(--fg-muted)", maxWidth: 460 } }, "Plans update as things are confirmed. Bookmark this page and check back any time \u2014 the countdown's already running."), /* @__PURE__ */ React.createElement("div", { className: "foot-row" }, /* @__PURE__ */ React.createElement("span", null, "The Doos \xB7 Vietnam '26"), /* @__PURE__ */ React.createElement("span", null, "Christine \xB7 Ashraf \xB7 Jason \xB7 Chris"))), /* @__PURE__ */ React.createElement(MapDrawer, { open: drawerOpen, onClose: () => setDrawerOpen(false), focusId: focusPin }));
+  } }), /* @__PURE__ */ React.createElement(Flights, null), /* @__PURE__ */ React.createElement(Hotels, null), /* @__PURE__ */ React.createElement(Phrases, null), /* @__PURE__ */ React.createElement("footer", { className: "foot" }, /* @__PURE__ */ React.createElement("div", { className: "label eyebrow" }, "06 \u2014 End of File"), /* @__PURE__ */ React.createElement("div", { className: "foot-title" }, "See you on", /* @__PURE__ */ React.createElement("br", null), "the other side."), /* @__PURE__ */ React.createElement("p", { style: { margin: 0, color: "var(--fg-muted)", maxWidth: 460 } }, "Plans update as things are confirmed. Bookmark this page and check back any time \u2014 the countdown's already running."), /* @__PURE__ */ React.createElement("div", { className: "foot-row" }, /* @__PURE__ */ React.createElement("span", null, "The Doos \xB7 Vietnam '26"), /* @__PURE__ */ React.createElement("span", null, "Christine \xB7 Ashraf \xB7 Jason \xB7 Chris"))), /* @__PURE__ */ React.createElement(MapDrawer, { open: drawerOpen, onClose: () => setDrawerOpen(false), focusId: focusPin }), /* @__PURE__ */ React.createElement(WeatherDrawer, { open: weatherOpen, onClose: () => setWeatherOpen(false), forecast }));
 }
 const root = ReactDOM.createRoot(document.getElementById("app"));
 root.render(/* @__PURE__ */ React.createElement(App, null));

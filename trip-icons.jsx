@@ -69,3 +69,18 @@ function weatherIcon(name, size = 44) {
   }
 }
 window.weatherIcon = weatherIcon;
+
+// WMO weather code -> { icon, cond }. Shared by the dashboard and the trip forecast.
+function wmoWeather(code) {
+  if (code === 0) return { icon: "sun", cond: "Clear" };
+  if (code === 1) return { icon: "sun", cond: "Mainly clear" };
+  if (code === 2) return { icon: "cloud-sun", cond: "Partly cloudy" };
+  if (code === 3) return { icon: "cloud", cond: "Overcast" };
+  if (code >= 45 && code <= 48) return { icon: "cloud", cond: "Fog" };
+  if (code >= 51 && code <= 57) return { icon: "cloud", cond: "Drizzle" };
+  if (code >= 61 && code <= 67) return { icon: "storm", cond: "Rain" };
+  if (code >= 80 && code <= 82) return { icon: "storm", cond: "Showers" };
+  if (code >= 95) return { icon: "storm", cond: "Thunderstorm" };
+  return { icon: "cloud", cond: "Cloudy" };
+}
+window.wmoWeather = wmoWeather;

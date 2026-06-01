@@ -879,6 +879,51 @@
     }
     .foot-row { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-muted); }
 
+    /* === TRIP WEATHER ======================================= */
+    .wx-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin-top: 12px; padding: 6px 11px;
+      border: 1px solid var(--rule); background: var(--card); color: var(--card-fg);
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.02em;
+      cursor: pointer; transition: border-color 200ms, transform 200ms;
+      align-self: flex-start;
+    }
+    .wx-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .wx-chip .wx-ico { display: inline-flex; color: var(--accent); }
+    .wx-chip b { font-size: 13px; font-weight: 700; }
+    .wx-chip .wx-lo { color: var(--fg-muted); }
+    .wx-chip .wx-cond {
+      padding-left: 8px; margin-left: 2px; border-left: 1px solid var(--rule);
+      color: var(--fg-muted); text-transform: uppercase; font-size: 10px; letter-spacing: 0.08em;
+    }
+    .wx-chip--soon { color: var(--fg-muted); }
+    .wx-chip--soon .wx-soon { text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
+
+    .wx-body { overflow: auto; padding: 18px 20px 28px; }
+    @media (min-width: 720px) { .wx-body { padding: 22px 28px 32px; } }
+    .wx-strip {
+      display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;
+      scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
+    }
+    .wx-tile {
+      flex: 0 0 118px; scroll-snap-align: start;
+      border: 1px solid var(--rule); background: var(--bg);
+      padding: 12px; display: flex; flex-direction: column; gap: 6px; min-height: 168px;
+    }
+    .wx-tile.star { border-color: var(--accent); }
+    .wx-tile-top { display: flex; align-items: center; justify-content: space-between; }
+    .wx-tile-day { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; }
+    .wx-tile-star { color: var(--accent); font-size: 12px; }
+    .wx-tile-date { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); }
+    .wx-tile-city { font-size: 12px; font-weight: 600; color: var(--fg); }
+    .wx-tile-ico { color: var(--accent); margin-top: 4px; }
+    .wx-tile-temp { display: flex; align-items: baseline; gap: 6px; }
+    .wx-tile-temp b { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px; }
+    .wx-tile-temp span { color: var(--fg-muted); font-size: 13px; }
+    .wx-tile-cond { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-muted); }
+    .wx-tile-soon { margin-top: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.5; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-muted); }
+    .wx-note { margin: 14px 0 0; font-size: 12px; color: var(--fg-muted); }
+
     /* === SCROLLBAR ========================================== */
     body::-webkit-scrollbar { width: 10px; }
     body::-webkit-scrollbar-track { background: transparent; }

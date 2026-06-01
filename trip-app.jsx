@@ -71,6 +71,67 @@ function useParallax(ref, factor = 0.35) {
 }
 
 /* ===== HERO ============================================ */
+/* ===== TRIP FORECAST ================================== */
+// Per-trip-date weather. Open-Meteo gives 16 days out; days beyond that show a
+// placeholder and fill in automatically as the trip approaches.
+const WX_LOCS = {
+  hcmc:     [10.7769, 106.7009],
+  hanoi:    [21.0278, 105.8342],
+  halong:   [20.9101, 107.1839],
+  ninhbinh: [20.2506, 105.9745],
+};
+function dayLocId(city) {
+  const c = (city || "").toLowerCase();
+  if (c.includes("long")) return "halong";
+  if (c.includes("ninh binh")) return "ninhbinh";
+  if (c.includes("chi minh") || c.includes("hcmc") || c.includes("mekong") || c.includes("cu chi")) return "hcmc";
+  return "hanoi";
+}
+function dayIso(d) {
+  // All trip days are in June 2026; parse the leading day number from "11 Jun".
+  return `2026-06-${String(parseInt(d.date, 10)).padStart(2, "0")}`;
+}
+function dayWeather(forecast, d) {
+  if (!forecast) return { state: "loading" };
+  const e = forecast[dayLocId(d.city)] && forecast[dayLocId(d.city)][dayIso(d)];
+  if (e) {
+    const w = window.wmoWeather(e.code);
+    return { state: "ok", hi: e.hi, lo: e.lo, icon: w.icon, cond: w.cond };
+  }
+  return { state: "soon" };
+}
+function shortCity(c) {
+  return (c || "").split("→")[0].trim().replace("Ho Chi Minh City", "HCMC");
+}
+function useTripForecast() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const out = {};
+      await Promise.all(Object.entries(WX_LOCS).map(async ([id, [la, lo]]) => {
+        try {
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=16`);
+          const j = await r.json();
+          const m = {};
+          const t = (j && j.daily && j.daily.time) || [];
+          t.forEach((iso, i) => {
+            m[iso] = {
+              hi: Math.round(j.daily.temperature_2m_max[i]),
+              lo: Math.round(j.daily.temperature_2m_min[i]),
+              code: j.daily.weather_code[i],
+            };
+          });
+          out[id] = m;
+        } catch (e) { out[id] = {}; }
+      }));
+      if (!cancelled) setData(out);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  return data;
+}
+
 function Hero({ onScrollDown }) {
   const bgRef = useRef(null);
   useParallax(bgRef, 0.32);
@@ -152,18 +213,7 @@ function Dashboard() {
   // Live weather (Open-Meteo, free, no key) — falls back to the static data on failure
   useEffect(() => {
     let cancelled = false;
-    const wmo = (code) => {
-      if (code === 0) return { icon: "sun", cond: "Clear" };
-      if (code === 1) return { icon: "sun", cond: "Mainly clear" };
-      if (code === 2) return { icon: "cloud-sun", cond: "Partly cloudy" };
-      if (code === 3) return { icon: "cloud", cond: "Overcast" };
-      if (code >= 45 && code <= 48) return { icon: "cloud", cond: "Fog" };
-      if (code >= 51 && code <= 57) return { icon: "cloud", cond: "Drizzle" };
-      if (code >= 61 && code <= 67) return { icon: "storm", cond: "Rain" };
-      if (code >= 80 && code <= 82) return { icon: "storm", cond: "Showers" };
-      if (code >= 95) return { icon: "storm", cond: "Thunderstorm" };
-      return { icon: "cloud", cond: "Cloudy" };
-    };
+    const wmo = window.wmoWeather;
     cities.forEach(async (c) => {
       const co = cityCoords[c];
       if (!co) return;
@@ -511,7 +561,7 @@ function Activity({ a, onLinkOpenMap }) {
 }
 
 /* ===== ITINERARY ===================================== */
-function Itinerary({ onOpenMap, onActiveDayChange }) {
+function Itinerary({ onOpenMap, onActiveDayChange, forecast, onOpenWeather }) {
   // Track which day is in view (for the day-bar highlight) and the dominant mood
   // (for the page-wide day/night theme transition).
   useEffect(() => {
@@ -573,6 +623,24 @@ function Itinerary({ onOpenMap, onActiveDayChange }) {
                     {d.star && <span className="day-tag unmissable">★ Unmissable</span>}
                     {d.tags.map((t) => <span key={t} className="day-tag">{t}</span>)}
                   </div>
+                  {(() => {
+                    const wx = dayWeather(forecast, d);
+                    return (
+                      <button className={`wx-chip ${wx.state === "ok" ? "" : "wx-chip--soon"}`} onClick={onOpenWeather} title="See the full trip forecast">
+                        {wx.state === "ok" ? (
+                          <>
+                            <span className="wx-ico">{window.weatherIcon(wx.icon, 16)}</span>
+                            <b>{wx.hi}°</b><span className="wx-lo">{wx.lo}°</span>
+                            <span className="wx-cond">{wx.cond}</span>
+                          </>
+                        ) : wx.state === "loading" ? (
+                          <span className="wx-soon">Loading forecast…</span>
+                        ) : (
+                          <span className="wx-soon">Forecast nearer the date</span>
+                        )}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -922,6 +990,58 @@ function MapDrawer({ open, onClose, focusId }) {
   );
 }
 
+/* ===== WEATHER DRAWER =============================== */
+function WeatherDrawer({ open, onClose, forecast }) {
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  return (
+    <>
+      <div className={`drawer-scrim ${open ? "open" : ""}`} onClick={onClose}></div>
+      <div className={`drawer ${open ? "open" : ""}`} role="dialog" aria-label="Trip Forecast">
+        <div className="drawer-handle"><div></div></div>
+        <div className="drawer-head">
+          <div>
+            <div className="label" style={{ color: "var(--fg-muted)" }}>Weather</div>
+            <div className="drawer-title">Trip forecast · 13 days</div>
+          </div>
+          <button className="drawer-close" onClick={onClose} aria-label="Close"><Icon.Close /></button>
+        </div>
+        <div className="wx-body">
+          <div className="wx-strip">
+            {D.days.map((d) => {
+              const wx = dayWeather(forecast, d);
+              return (
+                <div key={d.n} className={`wx-tile ${d.star ? "star" : ""}`}>
+                  <div className="wx-tile-top">
+                    <span className="wx-tile-day">D{String(d.n).padStart(2, "0")}</span>
+                    {d.star && <span className="wx-tile-star">★</span>}
+                  </div>
+                  <div className="wx-tile-date">{d.weekday} {d.date}</div>
+                  <div className="wx-tile-city">{shortCity(d.city)}</div>
+                  {wx.state === "ok" ? (
+                    <>
+                      <div className="wx-tile-ico">{window.weatherIcon(wx.icon, 28)}</div>
+                      <div className="wx-tile-temp"><b>{wx.hi}°</b><span>{wx.lo}°</span></div>
+                      <div className="wx-tile-cond">{wx.cond}</div>
+                    </>
+                  ) : (
+                    <div className="wx-tile-soon">{wx.state === "loading" ? "Loading…" : "Forecast nearer the date"}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="wx-note">Live 16-day forecast from Open-Meteo. Dates beyond the 16-day window fill in automatically as the trip gets closer.</p>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ===== HOTELS ====================================== */
 function Hotels() {
   return (
@@ -985,7 +1105,9 @@ function App() {
   const [activeDay, setActiveDay] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [focusPin, setFocusPin] = useState(null);
+  const [weatherOpen, setWeatherOpen] = useState(false);
   const dashRef = useRef(null);
+  const forecast = useTripForecast();
 
   useReveal();
 
@@ -1025,6 +1147,8 @@ function App() {
       <Itinerary
         onOpenMap={openMap}
         onActiveDayChange={(n) => setActiveDay(n)}
+        forecast={forecast}
+        onOpenWeather={() => setWeatherOpen(true)}
       />
 
       <MapSection onOpenMap={() => { setFocusPin(null); setDrawerOpen(true); }} />
@@ -1045,6 +1169,7 @@ function App() {
       </footer>
 
       <MapDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} focusId={focusPin} />
+      <WeatherDrawer open={weatherOpen} onClose={() => setWeatherOpen(false)} forecast={forecast} />
     </>
   );
 }
