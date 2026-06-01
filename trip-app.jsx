@@ -233,7 +233,7 @@ function Hero({ onScrollDown }) {
 }
 
 /* ===== DASHBOARD ====================================== */
-function Dashboard() {
+function Dashboard({ onOpenWeather }) {
   const cities = Object.keys(D.weather);
   const [city, setCity] = useState(cities[0]);
   const [liveWeather, setLiveWeather] = useState(D.weather);
@@ -373,17 +373,18 @@ function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="weather-now">
+          <button className="weather-now" type="button" onClick={onOpenWeather} aria-label="Open the 13-day trip forecast">
             <div className="weather-icon">{window.weatherIcon(w.icon, 30)}</div>
             <div>
               <div className="weather-temp">{w.temp}<sup>°C</sup></div>
               <div className="weather-cond">{city} · {w.cond}</div>
+              <div className="weather-cta">13-day trip forecast <Icon.Arrow s={11}/></div>
             </div>
             <div className="weather-side">
               <span className="weather-pill">H {w.hi}° · L {w.lo}°</span>
               <span className="weather-pill">AQI {w.aqi}</span>
             </div>
-          </div>
+          </button>
         </div>
 
         <div className="dash-fx">
@@ -1186,7 +1187,7 @@ function App() {
   return (
     <>
       <Hero onScrollDown={scrollPastHero} />
-      <Dashboard />
+      <Dashboard onOpenWeather={() => setWeatherOpen(true)} />
       <DayBar active={activeDay} onJump={jumpToDay} onJumpSection={jumpToSection} />
 
       <Itinerary

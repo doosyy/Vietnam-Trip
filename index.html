@@ -284,7 +284,16 @@
 
     .weather-now {
       display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+      width: 100%; text-align: left; cursor: pointer;
+      transition: opacity 200ms;
     }
+    .weather-now:hover { opacity: 0.92; }
+    .weather-cta {
+      display: inline-flex; align-items: center; gap: 5px; margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .weather-now:hover .weather-cta { text-decoration: underline; text-underline-offset: 3px; }
     .weather-icon {
       width: 56px; height: 56px;
       display: grid; place-items: center;
