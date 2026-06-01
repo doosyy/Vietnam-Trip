@@ -285,14 +285,15 @@ window.TRIP_DATA = {
     "Ninh Binh": { temp: 30, lo: 24, hi: 33, cond: "Warm · soft cloud", icon: "cloud-sun", aqi: 55 },
   },
 
-  // Stylized SVG-only map route, no Google Maps.
-  // Coords are tuned to a 600×800 viewbox roughly mapping Vietnam's S-shape.
+  // Real coordinates (lat/lng) — rendered on an interactive Leaflet map.
+  // routeOrder below sets the south-to-north line drawn between stops.
+  routeOrder: ["hcmc", "cuchi", "mekong", "hanoi", "halong", "ninhbinh"],
   mapPins: [
-    { id: "hcmc", label: "Ho Chi Minh City", sub: "11–15 Jun", x: 245, y: 740, labelDir: "right" },
-    { id: "mekong", label: "Mekong Delta", sub: "Day trip · 14 Jun", x: 200, y: 770, labelDir: "left" },
-    { id: "cuchi", label: "Cu Chi Tunnels", sub: "Day trip · 13 Jun", x: 230, y: 712, labelDir: "left" },
-    { id: "ninhbinh", label: "Ninh Binh", sub: "Day trip · 20 Jun", x: 380, y: 260, labelDir: "left" },
-    { id: "halong", label: "Ha Long Bay", sub: "Overnight · 18–19 Jun", x: 478, y: 200, labelDir: "right" },
-    { id: "hanoi", label: "Hanoi", sub: "15–23 Jun", x: 390, y: 200, labelDir: "left" },
+    { id: "hcmc", label: "Ho Chi Minh City", sub: "11–15 Jun", lat: 10.7769, lng: 106.7009 },
+    { id: "mekong", label: "Mekong Delta", sub: "Day trip · 14 Jun", lat: 10.3600, lng: 106.3650 },
+    { id: "cuchi", label: "Cu Chi Tunnels", sub: "Day trip · 13 Jun", lat: 11.1426, lng: 106.4634 },
+    { id: "ninhbinh", label: "Ninh Binh", sub: "Day trip · 20 Jun", lat: 20.2506, lng: 105.9745 },
+    { id: "halong", label: "Ha Long Bay", sub: "Overnight · 18–19 Jun", lat: 20.9101, lng: 107.1839 },
+    { id: "hanoi", label: "Hanoi", sub: "15–23 Jun", lat: 21.0278, lng: 105.8342 },
   ],
 };

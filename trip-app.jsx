@@ -694,127 +694,119 @@ function RegionalMap({ region }) {
     </div>
   );
 }
-function VietnamMap({ activeId, onPickPin }) {
-  // Hand-traced simplified Vietnam outline on a 600×900 viewbox.
-  // Real coastline, real country shape — kept blocky for the brutalist feel.
-  const VIETNAM_PATH = `
-    M 318 78
-    L 358 70 L 398 72 L 432 86 L 460 104 L 478 120
-    L 488 132 L 478 142 L 460 138 L 440 140 L 432 152
-    L 444 168 L 466 178 L 488 192 L 502 212 L 498 232
-    L 482 244 L 462 244 L 444 250 L 436 268 L 432 288
-    L 422 308 L 410 326 L 396 342 L 384 360 L 376 380
-    L 368 402 L 360 426 L 354 452 L 350 478 L 348 506
-    L 344 534 L 336 558 L 322 578 L 304 596 L 294 618
-    L 296 640 L 304 660 L 308 682 L 304 702 L 292 722
-    L 282 744 L 268 762 L 246 776 L 220 782 L 196 776
-    L 174 760 L 160 740 L 156 718 L 162 696 L 178 678
-    L 196 666 L 218 660 L 232 650 L 238 632 L 232 614
-    L 218 600 L 200 590 L 184 572 L 178 550 L 184 528
-    L 198 510 L 210 490 L 218 466 L 220 442 L 216 418
-    L 208 396 L 204 374 L 210 352 L 222 332 L 238 314
-    L 254 296 L 268 276 L 276 254 L 278 230 L 272 210
-    L 260 192 L 248 174 L 240 154 L 246 134 L 260 118
-    L 280 102 L 300 90 Z
-  `;
+function VietnamMap({ activeId, onPickPin, interactive = true }) {
+  // Real interactive map via Leaflet + free CARTO basemap (no API key).
+  const elRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef({});
+  const tileRef = useRef(null);
+  const routeRef = useRef(null);
 
-  return (
-    <svg viewBox="0 0 600 900" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <defs>
-        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.4" opacity="0.16"/>
-        </pattern>
-        <pattern id="sea" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.10"/>
-        </pattern>
-      </defs>
+  const tileUrl = (dark) =>
+    dark
+      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+  const isNight = () => document.documentElement.getAttribute("data-theme") === "night";
+  const accentColor = () =>
+    getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#C8102E";
 
-      {/* Sea / background */}
-      <rect width="600" height="900" fill="url(#sea)" />
-      <rect width="600" height="900" fill="url(#grid)" />
+  useEffect(() => {
+    if (!window.L || !elRef.current || mapRef.current) return;
+    const L = window.L;
+    const pins = D.mapPins;
+    const allLatLng = pins.map((p) => [p.lat, p.lng]);
 
-      {/* Compass + scale strip — top-right */}
-      <g transform="translate(520, 60)" fill="currentColor" opacity="0.55">
-        <line x1="0" y1="-22" x2="0" y2="22" stroke="currentColor" strokeWidth="1" />
-        <polygon points="0,-22 -4,-12 4,-12" />
-        <text x="0" y="-28" fontFamily="JetBrains Mono, monospace" fontSize="9" textAnchor="middle" letterSpacing="1">N</text>
-      </g>
+    const map = L.map(elRef.current, {
+      zoomControl: interactive,
+      dragging: interactive,
+      scrollWheelZoom: false,
+      doubleClickZoom: interactive,
+      touchZoom: interactive,
+      boxZoom: interactive,
+      keyboard: interactive,
+      tap: interactive,
+    });
+    mapRef.current = map;
 
-      {/* Bordering countries — labels only, abstract */}
-      <text x="92" y="200" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="2" opacity="0.45" fill="currentColor">LAOS</text>
-      <text x="68" y="540" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="2" opacity="0.45" fill="currentColor">CAMBODIA</text>
-      <text x="510" y="540" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="2" opacity="0.5" fill="currentColor" textAnchor="end">EAST SEA</text>
-      <text x="500" y="156" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="2" opacity="0.5" fill="currentColor" textAnchor="end">GULF OF TONKIN</text>
-      <text x="370" y="76" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="2" opacity="0.45" fill="currentColor">CHINA</text>
+    tileRef.current = L.tileLayer(tileUrl(isNight()), {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap, &copy; CARTO',
+    }).addTo(map);
 
-      {/* Country fill */}
-      <path
-        d={VIETNAM_PATH}
-        fill="var(--bg-2)"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="miter"
-      />
+    // Route line, south to north
+    const order = D.routeOrder || pins.map((p) => p.id);
+    const routePts = order
+      .map((id) => pins.find((p) => p.id === id))
+      .filter(Boolean)
+      .map((p) => [p.lat, p.lng]);
+    routeRef.current = L.polyline(routePts, {
+      color: accentColor(),
+      weight: 3,
+      opacity: 0.85,
+      dashArray: "2 8",
+      lineCap: "round",
+    }).addTo(map);
 
-      {/* Hainan island sketch (east, for orientation) */}
-      <ellipse cx="540" cy="222" rx="22" ry="14" fill="var(--bg-2)" stroke="currentColor" strokeWidth="1" opacity="0.7" />
-      <text x="540" y="226" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="currentColor" opacity="0.55" textAnchor="middle" letterSpacing="1">HAINAN</text>
+    // Numbered markers (number matches the legend order)
+    pins.forEach((p, i) => {
+      const icon = L.divIcon({
+        className: "trip-pin",
+        html: `<span>${i + 1}</span>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+      });
+      const m = L.marker([p.lat, p.lng], { icon }).addTo(map);
+      m.bindTooltip(`${p.label} · ${p.sub}`, {
+        direction: "top",
+        offset: [0, -14],
+        className: "trip-tip",
+      });
+      if (onPickPin) m.on("click", () => onPickPin(p.id));
+      markersRef.current[p.id] = m;
+    });
 
-      {/* Halong bay islands — small dots east of Hanoi */}
-      <g fill="currentColor" opacity="0.55">
-        <circle cx="488" cy="200" r="2" />
-        <circle cx="498" cy="212" r="1.5" />
-        <circle cx="506" cy="198" r="1.5" />
-        <circle cx="514" cy="208" r="2" />
-        <circle cx="520" cy="220" r="1.2" />
-      </g>
+    map.fitBounds(allLatLng, { padding: [34, 34] });
 
-      {/* Route line — south to north, dashed terracotta */}
-      <path
-        d="M 220 770 Q 240 720 250 680 Q 270 600 290 520 Q 310 440 330 360 Q 350 290 380 240 L 460 220"
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth="2.5"
-        strokeDasharray="6 4"
-        strokeLinecap="square"
-      />
+    // Keep the map sized correctly inside drawers / aspect-ratio boxes
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(elRef.current);
 
-      {/* Pins — coordinates updated to sit on the real country */}
-      {D.mapPins.map((p, i) => {
-        const isActive = activeId === p.id;
-        const r = isActive ? 13 : 9;
-        const dir = p.labelDir || "right";
-        // Estimate label width from character count — close enough for layout.
-        const labelW = Math.max(70, p.label.length * 8 + 20);
-        const subW = Math.max(80, p.sub.length * 5 + 16);
-        const boxW = Math.max(labelW, subW);
-        const lx = dir === "left" ? -(r + 6) - boxW : r + 6;
-        const tx = dir === "left" ? -(r + 12) : r + 12;
-        const anchor = dir === "left" ? "end" : "start";
-        return (
-          <g key={p.id} transform={`translate(${p.x}, ${p.y})`} onClick={() => onPickPin?.(p.id)} style={{ cursor: "pointer" }}>
-            <circle r={r + 10} fill="var(--accent)" opacity={isActive ? 0.20 : 0} />
-            <rect x={-r} y={-r} width={r*2} height={r*2} fill="var(--accent)" />
-            <text x={0} y={4} fill="#fff" fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" textAnchor="middle">
-              {i+1}
-            </text>
-            <g>
-              <rect x={lx} y={-12} width={boxW} height={28} fill="var(--bg)" opacity="0.92" />
-              <text x={tx} y={2} fill="currentColor" fontFamily="Bricolage Grotesque, sans-serif" fontWeight="700" fontSize="14" textAnchor={anchor}>
-                {p.label}
-              </text>
-              <text x={tx} y={14} fill="currentColor" opacity="0.55" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="0.6" textAnchor={anchor}>
-                {p.sub.toUpperCase()}
-              </text>
-            </g>
-          </g>
-        );
-      })}
+    // Swap tiles + route colour when the day/night theme changes
+    const mo = new MutationObserver(() => {
+      tileRef.current && tileRef.current.setUrl(tileUrl(isNight()));
+      routeRef.current && routeRef.current.setStyle({ color: accentColor() });
+    });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-      {/* Country name */}
-      <text x="306" y="430" fontFamily="Bricolage Grotesque, sans-serif" fontWeight="800" fontSize="28" letterSpacing="2" fill="currentColor" opacity="0.18" textAnchor="middle">VIỆT NAM</text>
-    </svg>
-  );
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = {};
+    };
+  }, []);
+
+  // Focus a stop when activeId changes; reset to full route when cleared
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !window.L) return;
+    Object.entries(markersRef.current).forEach(([id, m]) => {
+      const el = m.getElement && m.getElement();
+      if (el) el.classList.toggle("active", id === activeId);
+    });
+    if (activeId) {
+      const p = D.mapPins.find((x) => x.id === activeId);
+      if (p) {
+        map.flyTo([p.lat, p.lng], 9, { duration: 0.7 });
+        markersRef.current[activeId] && markersRef.current[activeId].openTooltip();
+      }
+    } else {
+      map.flyToBounds(D.mapPins.map((p) => [p.lat, p.lng]), { padding: [34, 34], duration: 0.7 });
+    }
+  }, [activeId]);
+
+  return <div ref={elRef} className="leaflet-stage" role="img" aria-label="Map of the Vietnam trip route" />;
 }
 
 function MapSection({ onOpenMap }) {
@@ -833,7 +825,7 @@ function MapSection({ onOpenMap }) {
 
       <div className="mapcard reveal">
         <div className="map-mini" style={{ color: "var(--fg)" }}>
-          <VietnamMap />
+          <VietnamMap interactive={false} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 15 }}>

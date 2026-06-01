@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <style>
     /* === THEME TOKENS ============================================ */
     :root {
@@ -734,7 +735,30 @@
     @media (min-width: 720px) { .mapcard { grid-template-columns: 1.1fr 1fr; align-items: center; } }
     .map-mini { aspect-ratio: 3/4; background: var(--bg-2); position: relative; overflow: hidden; }
     @media (min-width: 720px) { .map-mini { aspect-ratio: 4/5; } }
-    .map-mini svg { width: 100%; height: 100%; display: block; }
+
+    /* === LEAFLET MAP ====================================== */
+    .leaflet-stage { width: 100%; height: 100%; }
+    .leaflet-container { background: var(--bg-2); font-family: 'Manrope', sans-serif; }
+    .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,0.7); }
+    [data-theme="night"] .leaflet-control-attribution { background: rgba(0,0,0,0.5); color: var(--fg-muted); }
+    [data-theme="night"] .leaflet-control-attribution a { color: var(--fg-muted); }
+    .trip-pin { background: none; border: 0; }
+    .trip-pin span {
+      display: grid; place-items: center;
+      width: 26px; height: 26px;
+      background: var(--accent); color: #fff;
+      font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px;
+      border: 2px solid var(--card);
+      box-shadow: 0 1px 5px rgba(0,0,0,0.35);
+    }
+    .trip-pin.active span { transform: scale(1.18); box-shadow: 0 2px 9px rgba(0,0,0,0.45); }
+    .leaflet-tooltip.trip-tip {
+      background: var(--card); color: var(--card-fg);
+      border: 1px solid var(--rule); border-radius: 0;
+      font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .leaflet-tooltip.trip-tip::before { display: none; }
     .map-cta {
       width: 100%;
       padding: 18px 22px;
@@ -773,7 +797,7 @@
     .drawer-body { overflow: auto; padding: 16px 20px 28px; display: grid; grid-template-columns: 1fr; gap: 14px; }
     @media (min-width: 720px) { .drawer-body { grid-template-columns: 1.1fr 1fr; gap: 24px; padding: 22px 28px 32px; } }
     .map-full { aspect-ratio: 3/4; background: var(--bg-2); position: relative; overflow: hidden; }
-    .map-full svg { width: 100%; height: 100%; }
+    @media (min-width: 720px) { .map-full { aspect-ratio: 1/1; } }
     .map-legend { display: flex; flex-direction: column; gap: 6px; }
     .map-legend-item {
       display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center;
@@ -840,6 +864,7 @@
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <script src="trip-data.js"></script>
   <script src="image-slot.js"></script>
