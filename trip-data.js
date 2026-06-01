@@ -65,9 +65,9 @@ window.TRIP_DATA = {
       tip: "Use the Grab app for taxis, not the random ones at the airport. Set it up before we land.",
     },
     {
-      n: 2, date: "12 Jun", weekday: "Fri", city: "Ho Chi Minh City", title: "History & Markets",
+      n: 2, date: "12 Jun", weekday: "Fri", city: "Ho Chi Minh City", title: "History & Markets", /* hero: Ben Thanh Market */
       tags: ["History", "Shopping", "Food"], mood: "day",
-      hero: "https://doosyy.github.io/Vietnam-Trip/img/banh-mi.jpg",
+      hero: "https://doosyy.github.io/Vietnam-Trip/img/ben-thanh.jpg",
       activities: [
         { time: "Morning", mood: "morning", title: "War Remnants Museum", detail: "10-minute Grab from the hotel, or 20-min walk if cool enough. Heavy emotionally — take your time. Get there before the heat kicks in.", link: "War Remnants Museum" },
         { time: "Midday", mood: "afternoon", title: "Hotel lunch & cheeky drink", detail: "Midday break. Heat is no joke — grab a cold one and re-set before round two." },
@@ -140,7 +140,7 @@ window.TRIP_DATA = {
     {
       n: 7, date: "17 Jun", weekday: "Wed", city: "Hanoi", title: "Temple & Shopping",
       tags: ["Culture", "Shopping", "Easy"], mood: "day",
-      hero: "https://doosyy.github.io/Vietnam-Trip/img/hanoi-old-quarter.jpg",
+      hero: "https://doosyy.github.io/Vietnam-Trip/img/temple-literature.jpg",
       activities: [
         { time: "Morning", mood: "morning", title: "Slow start", detail: "No rush today. Proper breakfast before an easy day around the Old Quarter." },
         { time: "Late morning", mood: "morning", title: "Temple of Literature", detail: "15-min Grab from the Old Quarter. Vietnam's first university — built in 1070. Hire a guide; the history is what makes it.", link: "Temple of Literature" },
