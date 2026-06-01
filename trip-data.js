@@ -240,11 +240,11 @@ window.TRIP_DATA = {
       note: "Rooftop pool on level 19 with city views. Breakfast included means mornings are easy. ~45 min Grab from Tan Son Nhat.",
     },
     {
-      city: "Hanoi · Stay 1", name: "Hanoi Esplendor Hotel and Spa", booked: true,
-      address: "Hoan Kiem District, Hanoi",
+      city: "Hanoi · Stay 1", name: "SQ Hang Gai Hotel & Spa", booked: true,
+      address: "100 Hang Gai Street, Hoan Kiem, Hanoi",
       dates: "15 → 18 June · 3 nights",
-      tags: ["Breakfast incl.", "Spa", "Old Quarter"],
-      note: "Right in the heart of the Old Quarter. ~45 min from Noi Bai via pre-booked transfer.",
+      tags: ["Breakfast incl.", "Spa", "Old Quarter", "3 rooms"],
+      note: "Right on Hang Gai in the heart of the Old Quarter. Check-in from 14:00 — we land late on the 15th so the pre-booked transfer takes us straight here. Two Deluxe rooms (Chris, Jason) plus a Luxury Old Quarter View room (Ashraf). Confirmation 5358747870.",
     },
     {
       city: "Ha Long Bay", name: "Mon Cheri Cruise", booked: true,
