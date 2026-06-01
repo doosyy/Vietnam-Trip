@@ -35,7 +35,7 @@ window.TRIP_DATA = {
       carrier: "Vietnam Airlines",
       flightNo: "VN256",
       aircraft: "",
-      note: "Late arrival — transfer pre-booked so we're not figuring it out at midnight half asleep.",
+      note: "Late arrival, but no stress. We'll grab a transfer through the Grab app the moment we land. They're everywhere at Noi Bai and dead easy to find, even at midnight.",
     },
     {
       kind: "Return",
@@ -89,7 +89,7 @@ window.TRIP_DATA = {
         terrain: "jungle",
       },
       activities: [
-        { time: "08:00", mood: "morning", title: "Tour bus pickup", detail: "1.5 hours northwest of the city. Booked a small group tour, not the giant 40-person buses." },
+        { time: "08:00", mood: "morning", title: "Tour bus pickup", detail: "1.5 hours northwest of the city. We'll go with a small-group tour, not the giant 40-person buses. Loads to choose from once we're there." },
         { time: "Late morning", mood: "morning", title: "Cu Chi Tunnels", detail: "Jason, you can crawl through the actual tunnels if you want. I'd take the enlarged tourist version unless you're keen to really test yourself.", link: "Cu Chi Tunnels" },
         { time: "Afternoon", mood: "afternoon", title: "Hotel + rooftop pool", detail: "Back by mid-afternoon. You'll have earnt it." },
       ],
@@ -122,7 +122,7 @@ window.TRIP_DATA = {
       activities: [
         { time: "Morning", mood: "morning", title: "Free morning", detail: "Sleep in, rooftop pool one last time, leisurely breakfast." },
         { time: "17:30", mood: "evening", title: "Leave for airport", detail: "Tan Son Nhat is ~40 min from District 3. Aim to leave by 5:30pm for the 8:30pm departure." },
-        { time: "22:35", mood: "night", title: "Land in Hanoi", detail: "Pre-booked transfer straight to the Old Quarter. Noi Bai is ~45 min away. Bed." },
+        { time: "22:35", mood: "night", title: "Land in Hanoi", detail: "Open the Grab app and book a car straight to the Old Quarter. Easy to find even this late. Noi Bai is ~45 min away. Bed." },
       ],
     },
     {
@@ -244,7 +244,7 @@ window.TRIP_DATA = {
       address: "100 Hang Gai Street, Hoan Kiem, Hanoi",
       dates: "15 → 18 June · 3 nights",
       tags: ["Breakfast incl.", "Spa", "Old Quarter", "3 rooms"],
-      note: "Right on Hang Gai in the heart of the Old Quarter. Check-in from 14:00 — we land late on the 15th so the pre-booked transfer takes us straight here. Two Deluxe rooms (Chris, Jason) plus a Luxury Old Quarter View room (Ashraf). Confirmation 5358747870.",
+      note: "Right on Hang Gai in the heart of the Old Quarter. Check-in from 14:00 — we land late on the 15th, so we'll just book a Grab at the airport and be here in ~45 min. Two Deluxe rooms (Chris, Jason) plus a Luxury Old Quarter View room (Ashraf). Confirmation 5358747870.",
     },
     {
       city: "Ha Long Bay", name: "Mon Cheri Cruise", booked: true,
