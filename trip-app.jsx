@@ -589,11 +589,18 @@ function Activity({ a, onLinkOpenMap }) {
         <div>
           <div className="activity-detail">
             {a.detail}
-            {a.link && (
+            {(a.link || a.url) && (
               <div className="activity-actions">
-                <button className="btn-ghost" onClick={() => onLinkOpenMap?.(a.link)}>
-                  <Icon.Map s={11}/> &nbsp; View on Map
-                </button>
+                {a.link && (
+                  <button className="btn-ghost" onClick={() => onLinkOpenMap?.(a.link)}>
+                    <Icon.Map s={11}/> &nbsp; View on Map
+                  </button>
+                )}
+                {a.url && (
+                  <a className="btn-ghost" href={a.url} target="_blank" rel="noopener noreferrer">
+                    <Icon.Arrow s={11}/> &nbsp; Tour details
+                  </a>
+                )}
               </div>
             )}
           </div>

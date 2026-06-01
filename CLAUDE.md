@@ -47,6 +47,9 @@ GitHub Pages: `doosyy.github.io/Vietnam-Trip/`. If you edited any `.jsx`, run `.
 - `useTripPhase()` recomputes every second from `departDate`/`returnDate`. Hero shows: **before** = countdown; **during** = `.trip-status` "Day N of 13 · We're in Vietnam"; **after** = "Until next time" wrap. Don't let the countdown render at 00:00:00.
 - Trip forecast fetch uses `forecast_days=16` + `past_days=14`, so days already passed during the trip show their **actual** recorded weather (`state:"actual"`). `dayWeather` compares the day's ISO to today: future-in-window = `ok`, future-beyond = `soon` ("Forecast nearer the date"), past-with-data = `actual`, past-no-data = `past` ("Trip day complete").
 
+## Data shapes
+- An itinerary `activity` can have `link` (label → opens the map drawer on a matching pin) and/or `url` (external link → renders a "Tour details" button opening in a new tab). Both, either, or neither.
+
 ## Architecture gotchas
 - **Loader fade is in its own isolated `<script>` tag** in `index.html` after the loader div. Inline style changes, no class toggling. Immune to React/Babel errors elsewhere
 - **Currency converter** has two independent state vars (`aud`, `vndStr`) and two `<input>` elements. Quick-amount buttons must sync both. Header label is `"AUD ⇄ VND"`

@@ -211,10 +211,11 @@ window.TRIP_DATA = {
     },
     {
       n: 12, date: "22 Jun", weekday: "Mon", city: "Hanoi", title: "Flex Day",
-      tags: ["Food", "Free"], mood: "day",
+      tags: ["Food", "Hands-on", "Free"], mood: "day",
       hero: "https://doosyy.github.io/Vietnam-Trip/img/pho.jpg",
       activities: [
-        { time: "Morning", mood: "morning", title: "Open morning — shopping", detail: "By this point we'll know what we feel like. Good morning for last-minute shopping in the Old Quarter — souvenirs, silk, art prints, anything you've been eyeing all week. Don't over-plan it." },
+        { time: "08:30", mood: "morning", title: "Knife-forging class (optional)", detail: "For anyone keen on something properly hands-on: forge your own knife with the blacksmiths at Da Sy village, just outside Hanoi. About 4 hours with hotel pickup from the Old Quarter, and you take the finished knife home. Around US$60 per person, private group of up to 5. Jason, this one has your name on it.", url: "https://atasteofhanoi.com/hanoi-tours/day-tours/knives-making-class/" },
+        { time: "Morning", mood: "morning", title: "Or take it easy — shopping", detail: "Not feeling the forge? By this point we'll know what we feel like. Good morning for last-minute shopping in the Old Quarter: souvenirs, silk, art prints, anything you've been eyeing all week. Don't over-plan it." },
         { time: "13:00", mood: "afternoon", title: "Cooking class (my vote)", detail: "Learn Pho, Banh Mi, spring rolls. Actually go home able to cook the food we've been eating.", link: "Cooking Class" },
         { time: "Evening", mood: "evening", title: "Last dinner", detail: "Pick somewhere good. Last proper meal in Vietnam." },
       ],
