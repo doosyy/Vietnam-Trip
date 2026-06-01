@@ -138,7 +138,18 @@ window.TRIP_DATA = {
       ],
     },
     {
-      n: 7, date: "17 Jun", weekday: "Wed", city: "Ha Long Bay", title: "Mon Cheri Cruise",
+      n: 7, date: "17 Jun", weekday: "Wed", city: "Hanoi", title: "Temple & Shopping",
+      tags: ["Culture", "Shopping", "Easy"], mood: "day",
+      hero: "https://doosyy.github.io/Vietnam-Trip/img/hanoi-old-quarter.jpg",
+      activities: [
+        { time: "Morning", mood: "morning", title: "Slow start", detail: "No rush today. Proper breakfast before an easy day around the Old Quarter." },
+        { time: "Late morning", mood: "morning", title: "Temple of Literature", detail: "15-min Grab from the Old Quarter. Vietnam's first university — built in 1070. Hire a guide; the history is what makes it.", link: "Temple of Literature" },
+        { time: "Afternoon", mood: "afternoon", title: "Hang Gai & Dong Xuan", detail: "Old Quarter shopping. Walkable from the hotel. Pack light for the cruise tomorrow — leave the big bags at the hotel." },
+        { time: "Evening", mood: "evening", title: "Cha Ca La Vong", detail: "Turmeric fish cooked at the table with dill. Worth trying." },
+      ],
+    },
+    {
+      n: 8, date: "18 Jun", weekday: "Thu", city: "Hanoi → Ha Long Bay", title: "Mon Cheri Cruise",
       tags: ["Nature", "Food", "Unmissable"], mood: "day", star: true,
       hero: "https://doosyy.github.io/Vietnam-Trip/img/halong-bay.jpg",
       region: {
@@ -147,35 +158,24 @@ window.TRIP_DATA = {
         bearing: "East",
         distance: "170 km",
         duration: "~3.5 hr drive",
-        transport: "Coach → cruise",
+        transport: "Shuttle bus → cruise",
         terrain: "bay",
       },
       activities: [
-        { time: "08:00", mood: "morning", title: "Coach pickup", detail: "3.5 hours to Ha Long City. Arrive at the harbour around 11:30am." },
+        { time: "08:00", mood: "morning", title: "Luxury shuttle pickup", detail: "Luxury shuttle bus from the Old Quarter to Ha Long, included in the cruise package. ~3.5 hours. Arrive at the harbour around 11:30am." },
         { time: "12:00", mood: "afternoon", title: "Board Mon Cheri + lunch on deck", detail: "The moment the limestone karsts appear around you, everyone goes quiet. It does that to people." },
-        { time: "Afternoon", mood: "afternoon", title: "Cave visit + optional kayaking", detail: "Kayaking is completely optional — you can sit on the deck and let the views do the work." },
+        { time: "Afternoon", mood: "afternoon", title: "Cave visit + optional kayaking", detail: "Kayaking is included and completely optional — you can sit on the deck and let the views do the work." },
         { time: "Sunset", mood: "evening", title: "Sunset on deck + seafood dinner", detail: "Drinks on deck, dinner on board, sleep on the boat.", link: "Ha Long Bay Cruise" },
       ],
     },
     {
-      n: 8, date: "18 Jun", weekday: "Thu", city: "Ha Long Bay → Hanoi", title: "Sunrise on the Bay",
+      n: 9, date: "19 Jun", weekday: "Fri", city: "Ha Long Bay → Hanoi", title: "Sunrise on the Bay",
       tags: ["Nature"], mood: "day",
       hero: "https://doosyy.github.io/Vietnam-Trip/img/halong-bay.jpg",
       activities: [
         { time: "Sunrise", mood: "morning", title: "Sunrise on deck", detail: "Set an alarm. Worth it." },
         { time: "Morning", mood: "morning", title: "Breakfast + sail back", detail: "Slow morning on board before disembarking." },
-        { time: "Afternoon", mood: "afternoon", title: "Coach back to Hanoi", detail: "3.5 hours. Back in the Old Quarter by early evening." },
-      ],
-    },
-    {
-      n: 9, date: "19 Jun", weekday: "Fri", city: "Hanoi", title: "Temple & Shopping",
-      tags: ["Culture", "Shopping", "Easy"], mood: "day",
-      hero: "https://doosyy.github.io/Vietnam-Trip/img/hanoi-old-quarter.jpg",
-      activities: [
-        { time: "Morning", mood: "morning", title: "Slow start", detail: "No alarm. Proper breakfast after two days on the bay." },
-        { time: "Late morning", mood: "morning", title: "Temple of Literature", detail: "15-min Grab from the Old Quarter. Vietnam's first university — built in 1070. Hire a guide; the history is what makes it.", link: "Temple of Literature" },
-        { time: "Afternoon", mood: "afternoon", title: "Hang Gai & Dong Xuan", detail: "Old Quarter shopping. Walkable from the hotel." },
-        { time: "Evening", mood: "evening", title: "Cha Ca La Vong", detail: "Turmeric fish cooked at the table with dill. Worth trying." },
+        { time: "Afternoon", mood: "afternoon", title: "Shuttle back to Hanoi", detail: "Same luxury shuttle bus back to the Old Quarter. ~3.5 hours. Check into our final Hanoi stay by early evening." },
       ],
     },
     {
@@ -249,9 +249,9 @@ window.TRIP_DATA = {
     {
       city: "Ha Long Bay", name: "Mon Cheri Cruise", booked: true,
       address: "Ha Long Bay, Quang Ninh Province",
-      dates: "17 → 18 June · 1 night",
-      tags: ["Overnight cruise", "All meals", "Return transfers"],
-      note: "One night on the water. Dinner, breakfast, all meals on board.",
+      dates: "18 → 19 June · 1 night",
+      tags: ["Ocean Suite Balcony", "All meals", "Shuttle incl.", "Kayaking"],
+      note: "Ocean Suite Balcony (twin) for the four of us. One night on the water with all meals on board, plus free kayaking. Luxury shuttle bus round trip Hanoi ⇄ Ha Long is included. Booking code 190282.",
     },
     {
       city: "Hanoi · Stay 2", name: "Old Quarter Hotel (TBC)", booked: false,
@@ -292,7 +292,7 @@ window.TRIP_DATA = {
     { id: "mekong", label: "Mekong Delta", sub: "Day trip · 14 Jun", x: 200, y: 770, labelDir: "left" },
     { id: "cuchi", label: "Cu Chi Tunnels", sub: "Day trip · 13 Jun", x: 230, y: 712, labelDir: "left" },
     { id: "ninhbinh", label: "Ninh Binh", sub: "Day trip · 20 Jun", x: 380, y: 260, labelDir: "left" },
-    { id: "halong", label: "Ha Long Bay", sub: "Overnight · 17–18 Jun", x: 478, y: 200, labelDir: "right" },
+    { id: "halong", label: "Ha Long Bay", sub: "Overnight · 18–19 Jun", x: 478, y: 200, labelDir: "right" },
     { id: "hanoi", label: "Hanoi", sub: "15–23 Jun", x: 390, y: 200, labelDir: "left" },
   ],
 };

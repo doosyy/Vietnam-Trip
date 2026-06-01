@@ -932,7 +932,7 @@ function Hotels() {
           <h2 className="section-title">Three booked.<br/>One to confirm.</h2>
         </div>
         <p className="section-blurb">
-          HCMC sorted. Hanoi sorted for the first three nights. Final Hanoi stay locks in once the cruise dates settle.
+          HCMC, the first Hanoi stay and the Ha Long cruise are all locked in. Just the final Hanoi stay left to book.
         </p>
       </div>
       <div className="hotel-grid">
