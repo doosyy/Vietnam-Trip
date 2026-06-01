@@ -1219,6 +1219,9 @@ function App() {
           <span>The Doos · Vietnam '26</span>
           <span>Christine · Ashraf · Jason · Chris</span>
         </div>
+        <div className="foot-row" style={{ opacity: 0.7 }}>
+          <span>Some location photos via Wikimedia Commons</span>
+        </div>
       </footer>
 
       <MapDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} focusId={focusPin} />

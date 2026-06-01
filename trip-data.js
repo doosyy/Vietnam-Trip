@@ -151,7 +151,7 @@ window.TRIP_DATA = {
     {
       n: 8, date: "18 Jun", weekday: "Thu", city: "Hanoi → Ha Long Bay", title: "Mon Cheri Cruise",
       tags: ["Nature", "Food", "Unmissable"], mood: "day", star: true,
-      hero: "https://doosyy.github.io/Vietnam-Trip/img/halong-bay.jpg",
+      hero: "https://doosyy.github.io/Vietnam-Trip/img/halong-cruise.jpg",
       region: {
         base: { name: "Hanoi · Old Quarter", lat: 21.0278, lng: 105.8342 },
         dest: { name: "Hạ Long City", lat: 20.9101, lng: 107.1839 },
