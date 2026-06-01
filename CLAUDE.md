@@ -14,6 +14,12 @@ Multi-file React app, no build step. React + Babel transpile JSX in-browser via 
 - React 18.3.1 **production.min** (not dev — dev is 5× larger, kills mobile load)
 - ReactDOM 18.3.1 **production.min**
 - @babel/standalone 7.29.0 (with SRI hash)
+- **Leaflet 1.9.4** (CSS in `<head>`, JS before app scripts) — real interactive route map, free CARTO basemap tiles (no API key)
+
+## Maps
+- `VietnamMap` in `trip-app.jsx` is a **Leaflet** map (not SVG). Reads `D.mapPins` (lat/lng) + `D.routeOrder`. Numbered markers + dashed route polyline. Tile layer swaps light/dark with `data-theme`; route colour tracks `--accent`. Uses a ResizeObserver + `invalidateSize()` so it renders correctly inside the off-screen drawer. `interactive={false}` for the mini preview in the Route section.
+- Do NOT add global `svg { width:100%; height:100% }` rules scoped to `.map-mini`/`.map-full` — they blow up Leaflet's internal attribution flag SVG. (Removed for this reason.)
+- `RegionalMap` (per-day segment diagram) is still the original abstract SVG with travel stats, not Leaflet.
 
 ## Deploy
 GitHub Pages: `doosyy.github.io/Vietnam-Trip/`. Push to deploy:
