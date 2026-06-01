@@ -17,6 +17,21 @@ function useCountdown(target) {
   return { days, hours, mins, secs };
 }
 
+// Which phase of the trip we're in, recomputed every second.
+function useTripPhase() {
+  const dep = new Date(D.meta.departDate).getTime();
+  const ret = new Date(D.meta.returnDate).getTime();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (now < dep) return { phase: "before" };
+  if (now > ret) return { phase: "after" };
+  const day = Math.min(D.meta.nights, Math.max(1, Math.floor((now - dep) / 86400000) + 1));
+  return { phase: "during", day };
+}
+
 function useClock(tz, fmt = { hour: "2-digit", minute: "2-digit", hour12: false }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -93,12 +108,18 @@ function dayIso(d) {
 }
 function dayWeather(forecast, d) {
   if (!forecast) return { state: "loading" };
-  const e = forecast[dayLocId(d.city)] && forecast[dayLocId(d.city)][dayIso(d)];
+  const iso = dayIso(d);
+  const e = forecast[dayLocId(d.city)] && forecast[dayLocId(d.city)][iso];
   if (e) {
     const w = window.wmoWeather(e.code);
-    return { state: "ok", hi: e.hi, lo: e.lo, icon: w.icon, cond: w.cond };
+    // A date earlier than today (with data) is what actually happened.
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const past = iso < todayIso;
+    return { state: past ? "actual" : "ok", hi: e.hi, lo: e.lo, icon: w.icon, cond: w.cond };
   }
-  return { state: "soon" };
+  // No data: a past date is "done", a future date is still beyond the forecast window.
+  const todayIso = new Date().toISOString().slice(0, 10);
+  return { state: iso < todayIso ? "past" : "soon" };
 }
 function shortCity(c) {
   return (c || "").split("→")[0].trim().replace("Ho Chi Minh City", "HCMC");
@@ -111,7 +132,7 @@ function useTripForecast() {
       const out = {};
       await Promise.all(Object.entries(WX_LOCS).map(async ([id, [la, lo]]) => {
         try {
-          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=16`);
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=16&past_days=14`);
           const j = await r.json();
           const m = {};
           const t = (j && j.daily && j.daily.time) || [];
@@ -136,6 +157,7 @@ function Hero({ onScrollDown }) {
   const bgRef = useRef(null);
   useParallax(bgRef, 0.32);
   const cd = useCountdown(D.meta.departDate);
+  const trip = useTripPhase();
   const melClock = useClock("Australia/Melbourne");
   const sgnClock = useClock("Asia/Ho_Chi_Minh");
 
@@ -173,12 +195,32 @@ function Hero({ onScrollDown }) {
               </p>
               <div className="hero-names">Christine&nbsp;· Ashraf&nbsp;· Jason&nbsp;&amp;&nbsp;Chris</div>
             </div>
-            <div className="countdown" aria-label="Time until departure">
-              <div><b>{String(cd.days).padStart(2,"0")}</b><span>Days</span></div>
-              <div><b>{String(cd.hours).padStart(2,"0")}</b><span>Hours</span></div>
-              <div><b>{String(cd.mins).padStart(2,"0")}</b><span>Mins</span></div>
-              <div><b>{String(cd.secs).padStart(2,"0")}</b><span>Secs</span></div>
-            </div>
+            {trip.phase === "before" && (
+              <div className="countdown" aria-label="Time until departure">
+                <div><b>{String(cd.days).padStart(2,"0")}</b><span>Days</span></div>
+                <div><b>{String(cd.hours).padStart(2,"0")}</b><span>Hours</span></div>
+                <div><b>{String(cd.mins).padStart(2,"0")}</b><span>Mins</span></div>
+                <div><b>{String(cd.secs).padStart(2,"0")}</b><span>Secs</span></div>
+              </div>
+            )}
+            {trip.phase === "during" && (
+              <div className="trip-status" aria-label="Trip in progress">
+                <div className="trip-status-num"><b>{String(trip.day).padStart(2,"0")}</b><span>of {D.meta.nights}</span></div>
+                <div className="trip-status-text">
+                  <b>We're in Vietnam</b>
+                  <span>Day {trip.day} of the trip. Live weather and local time below.</span>
+                </div>
+              </div>
+            )}
+            {trip.phase === "after" && (
+              <div className="trip-status" aria-label="Trip complete">
+                <div className="trip-status-num done"><b>✓</b><span>done</span></div>
+                <div className="trip-status-text">
+                  <b>Until next time</b>
+                  <span>That's a wrap on Vietnam '26. Thanks for following along.</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -625,9 +667,10 @@ function Itinerary({ onOpenMap, onActiveDayChange, forecast, onOpenWeather }) {
                   </div>
                   {(() => {
                     const wx = dayWeather(forecast, d);
+                    const hasTemp = wx.state === "ok" || wx.state === "actual";
                     return (
-                      <button className={`wx-chip ${wx.state === "ok" ? "" : "wx-chip--soon"}`} onClick={onOpenWeather} title="See the full trip forecast">
-                        {wx.state === "ok" ? (
+                      <button className={`wx-chip ${hasTemp ? "" : "wx-chip--soon"}`} onClick={onOpenWeather} title="See the full trip forecast">
+                        {hasTemp ? (
                           <>
                             <span className="wx-ico">{window.weatherIcon(wx.icon, 16)}</span>
                             <b>{wx.hi}°</b><span className="wx-lo">{wx.lo}°</span>
@@ -635,6 +678,8 @@ function Itinerary({ onOpenMap, onActiveDayChange, forecast, onOpenWeather }) {
                           </>
                         ) : wx.state === "loading" ? (
                           <span className="wx-soon">Loading forecast…</span>
+                        ) : wx.state === "past" ? (
+                          <span className="wx-soon">Trip day complete</span>
                         ) : (
                           <span className="wx-soon">Forecast nearer the date</span>
                         )}
@@ -1022,14 +1067,14 @@ function WeatherDrawer({ open, onClose, forecast }) {
                   </div>
                   <div className="wx-tile-date">{d.weekday} {d.date}</div>
                   <div className="wx-tile-city">{shortCity(d.city)}</div>
-                  {wx.state === "ok" ? (
+                  {(wx.state === "ok" || wx.state === "actual") ? (
                     <>
                       <div className="wx-tile-ico">{window.weatherIcon(wx.icon, 28)}</div>
                       <div className="wx-tile-temp"><b>{wx.hi}°</b><span>{wx.lo}°</span></div>
-                      <div className="wx-tile-cond">{wx.cond}</div>
+                      <div className="wx-tile-cond">{wx.state === "actual" ? `${wx.cond} · actual` : wx.cond}</div>
                     </>
                   ) : (
-                    <div className="wx-tile-soon">{wx.state === "loading" ? "Loading…" : "Forecast nearer the date"}</div>
+                    <div className="wx-tile-soon">{wx.state === "loading" ? "Loading…" : wx.state === "past" ? "Trip day complete" : "Forecast nearer the date"}</div>
                   )}
                 </div>
               );
@@ -1160,7 +1205,7 @@ function App() {
         <div className="label eyebrow">06 — End of File</div>
         <div className="foot-title">See you on<br/>the other side.</div>
         <p style={{ margin: 0, color: "var(--fg-muted)", maxWidth: 460 }}>
-          Plans update as things are confirmed. Bookmark this page and check back any time — the countdown's already running.
+          Plans update as things are confirmed. Bookmark this page and check back any time.
         </p>
         <div className="foot-row">
           <span>The Doos · Vietnam '26</span>
